@@ -460,6 +460,8 @@ export const useGame = create<GameState>()(
           toast: {
             id: `toast-${Date.now()}-acc`,
             title: `Scheduled · ${type.title}`,
+            intent: 'info',
+            icon: 'calendar',
             kpiDelta: type.impact,
             stakeholder: stakeholderForToast
               ? { name: characterDisplayName(stakeholderForToast.name), delta: +5 }
@@ -560,6 +562,8 @@ export const useGame = create<GameState>()(
           toast: {
             id: `toast-${Date.now()}-dec`,
             title: `Declined · ${t.title}`,
+            intent: 'caution',
+            icon: 'arrow-down',
             kpiDelta: cost,
             stakeholder: stakeholderForToast
               ? { name: characterDisplayName(stakeholderForToast.name), delta: declineDelta }
@@ -695,6 +699,8 @@ export const useGame = create<GameState>()(
           toast: {
             id: `toast-${Date.now()}-chaos`,
             title: `${label} · ${ev.title}`,
+            intent: response === 'attend' ? 'info' : response === 'delegate' ? 'caution' : 'warning',
+            icon: 'alert',
             kpiDelta: impact,
             stakeholder: chaosStakeholderForToast
               ? { name: characterDisplayName(chaosStakeholderForToast.name), delta: chaosRelDelta }
@@ -766,6 +772,8 @@ export const useGame = create<GameState>()(
           toast: {
             id: `toast-${Date.now()}-reply`,
             title: `Replied to ${characterDisplayName(convo.name)}`,
+            intent: replyDelta > 0 ? 'success' : replyDelta < 0 ? 'caution' : 'info',
+            icon: 'reply',
             kpiDelta: reply.delta,
             stakeholder: stakeholderForToast && replyDelta !== 0
               ? { name: characterDisplayName(stakeholderForToast.name), delta: replyDelta }

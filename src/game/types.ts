@@ -140,15 +140,24 @@ export interface ChatReply {
  * Brief toast that floats over the screen for ~2.5s after the player takes an
  * action that changes their state. Gives the missing reward signal — "yes,
  * something happened, here's what."
+ *
+ * Fluent MessageBar style: white background, colored left accent, icon, title,
+ * KPI chips, optional stakeholder change.
  */
+export type ToastIntent = 'info' | 'success' | 'caution' | 'warning';
+
 export interface FeedbackToast {
   id: string;
+  /** Headline ("Scheduled · Town Hall"). */
+  title?: string;
+  /** Visual intent — drives accent color + icon tile color. */
+  intent?: ToastIntent;
+  /** Icon name shown in the leading tile. */
+  icon?: 'calendar' | 'arrow-down' | 'alert' | 'send' | 'check' | 'reply' | 'sparkle';
   /** KPI deltas that just applied (productivity +5, morale -3 etc). */
   kpiDelta?: KpiDelta;
   /** Optional stakeholder relationship change ({name: 'David Chen', delta: +5}). */
   stakeholder?: { name: string; delta: number };
-  /** A short headline shown bold at the top of the toast. */
-  title?: string;
 }
 
 /**
