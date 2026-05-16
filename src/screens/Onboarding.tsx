@@ -3,9 +3,11 @@ import { useGame } from '@/game/store';
 import { BOSS } from '@/game/data';
 import { Icon } from '@/components/Icon';
 import { Avatar } from '@/components/Avatar';
+import { characterDisplayName } from '@/game/characters';
 
 export function Onboarding() {
   const setScreen = useGame((s) => s.setScreen);
+  const startGame = useGame((s) => s.startGame);
 
   return (
     <div className="flex flex-col h-full">
@@ -70,12 +72,15 @@ export function Onboarding() {
         className="mx-5 mt-3 bg-white rounded-md border border-ink-100 shadow-el-1 p-3.5"
       >
         <div className="flex items-start gap-3">
-          <Avatar name="Brad Manager" size={32} />
+          <Avatar name={characterDisplayName('Your Boss')} size={40} />
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-2">
-              <span className="font-semibold text-ink-800 text-[13.5px]">Your Boss</span>
-              <span className="text-[10.5px] text-ink-400">{BOSS.alias}</span>
+              <span className="font-semibold text-ink-800 text-[13.5px]">
+                {characterDisplayName('Your Boss')}
+              </span>
+              <span className="text-[10.5px] text-ink-400">Director · Your Manager</span>
             </div>
+            <div className="text-[10.5px] text-ink-400 italic">{BOSS.alias}</div>
             <p className="text-[13px] text-ink-700 mt-1 leading-snug">{BOSS.ask}</p>
           </div>
         </div>
@@ -89,7 +94,13 @@ export function Onboarding() {
         transition={{ duration: 0.4, delay: 0.25 }}
         className="px-5 pb-6 pt-2"
       >
-        <button onClick={() => setScreen('inbox')} className="pf-btn-primary w-full h-11">
+        <button
+          onClick={() => {
+            startGame();
+            setScreen('inbox');
+          }}
+          className="pf-btn-primary w-full h-11"
+        >
           Open your inbox
           <Icon name="chevron-right" size={16} />
         </button>

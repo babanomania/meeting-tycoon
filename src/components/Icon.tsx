@@ -47,7 +47,10 @@ export type IconName =
   | 'flag'
   | 'target'
   | 'shield'
-  | 'star';
+  | 'star'
+  | 'chat'
+  | 'reply'
+  | 'history';
 
 interface Props extends Omit<SVGProps<SVGSVGElement>, 'name'> {
   name: IconName;
@@ -292,6 +295,25 @@ const PATHS: Record<IconName, JSX.Element> = {
   star: (
     <>
       <path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6-5.4-2.9L6.6 19.7l1-6L3.2 9.4l6.1-.9z" />
+    </>
+  ),
+  chat: (
+    <>
+      <path d="M4 4h14a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4z" />
+      <path d="M8 9.5h8M8 13h5" />
+    </>
+  ),
+  reply: (
+    <>
+      <path d="M9 7L4 12l5 5" />
+      <path d="M4 12h10a6 6 0 016 6v2" />
+    </>
+  ),
+  history: (
+    <>
+      <path d="M3 12a9 9 0 109-9" />
+      <path d="M3 4v5h5" />
+      <path d="M12 8v5l3.5 2" />
     </>
   ),
 };

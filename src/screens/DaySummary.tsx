@@ -3,6 +3,7 @@ import { useGame } from '@/game/store';
 import { KPI_META } from '@/components/KpiBadge';
 import { Icon, type IconName } from '@/components/Icon';
 import { Avatar } from '@/components/Avatar';
+import { characterDisplayName } from '@/game/characters';
 import type { KpiKey } from '@/game/types';
 
 const CONFETTI = Array.from({ length: 22 }, (_, i) => ({
@@ -143,9 +144,11 @@ export function DaySummary() {
             Boss Feedback
           </div>
           <div className="flex items-start gap-3">
-            <Avatar name="Brad Manager" size={32} />
+            <Avatar name={characterDisplayName('Your Boss')} size={36} />
             <div className="flex-1">
-              <div className="text-[11.5px] text-ink-500">Your Boss · just now</div>
+              <div className="text-[11.5px] text-ink-500">
+                {characterDisplayName('Your Boss')} · just now
+              </div>
               <p className="text-[13px] text-ink-700 mt-0.5 italic leading-snug">
                 "{result.boss.text}"
               </p>

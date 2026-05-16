@@ -6,6 +6,7 @@ import { Icon } from '@/components/Icon';
 import { Avatar } from '@/components/Avatar';
 import { Chip, type ChipTone } from '@/components/Chip';
 import { KPI_META } from '@/components/KpiBadge';
+import { characterDisplayName } from '@/game/characters';
 import type { KpiKey, MeetingPriority, QuarterlyGoal, Kpis, KpiDelta } from '@/game/types';
 
 function priorityTone(p: MeetingPriority): ChipTone {
@@ -108,8 +109,8 @@ export function InboxScreen() {
                         <Chip tone={priorityTone(t.priority)}>{t.priority.toUpperCase()}</Chip>
                       </div>
                       <div className="flex items-center gap-2 text-[12px] text-ink-500">
-                        <Avatar name={r.from} size={20} />
-                        <span className="font-medium text-ink-700">{r.from}</span>
+                        <Avatar name={characterDisplayName(r.from)} size={22} />
+                        <span className="font-medium text-ink-700">{characterDisplayName(r.from)}</span>
                         <span className="text-ink-300">·</span>
                         <span className="inline-flex items-center gap-1">
                           <Icon name="clock" size={13} />
@@ -217,6 +218,9 @@ function GoalProjection({ delta, kpis }: { delta: KpiDelta; kpis: Kpis }) {
 }
 
 function projectGoalMovement(g: QuarterlyGoal, before: Kpis, after: Kpis) {
+  // Inbox projection only handles KPI-based goals — stakeholder goals don't shift
+  // from accepting a meeting (the relationship delta is applied at accept time).
+  if (!g.kpi) return [];
   const bv = before[g.kpi];
   const av = after[g.kpi];
   if (bv === av) return [];

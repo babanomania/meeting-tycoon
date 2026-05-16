@@ -1,5 +1,9 @@
+import { useState } from 'react';
+import { characterPhoto } from '@/game/characters';
+
 /**
- * Avatar — colored circle with initials. Matches Teams's people treatment.
+ * Avatar — colored circle with initials, or a real AI-generated photo when the
+ * name maps to a registered character profile.
  * Color is deterministic from the name (hash → palette index).
  */
 const PALETTE = [
@@ -28,13 +32,48 @@ export function initials(name: string): string {
 
 interface Props {
   name: string;
+  /** Optional explicit photo URL override. If unset, looked up from the character roster. */
+  src?: string;
   size?: number;
   className?: string;
 }
 
-export function Avatar({ name, size = 28, className }: Props) {
+export function Avatar({ name, src, size = 28, className }: Props) {
+  const photoUrl = src ?? characterPhoto(name);
+  const [imgFailed, setImgFailed] = useState(false);
   const c = PALETTE[hash(name) % PALETTE.length];
   const fontSize = Math.max(10, Math.round(size * 0.42));
+
+  // Render real photo when we have one and it loaded.
+  if (photoUrl && !imgFailed) {
+    return (
+      <div
+        className={`relative inline-block rounded-full overflow-hidden select-none ${className ?? ''}`}
+        style={{ width: size, height: size, background: c.bg }}
+        aria-label={name}
+        title={name}
+      >
+        {/* Initials shown behind the photo so they peek through during load + fade in via the img above */}
+        <span
+          className="absolute inset-0 flex items-center justify-center font-semibold"
+          style={{ color: c.fg, fontSize, lineHeight: 1 }}
+        >
+          {initials(name)}
+        </span>
+        <img
+          src={photoUrl}
+          alt={name}
+          loading="lazy"
+          width={size}
+          height={size}
+          className="absolute inset-0 w-full h-full object-cover"
+          onError={() => setImgFailed(true)}
+        />
+      </div>
+    );
+  }
+
+  // Fallback: initials in a colored circle.
   return (
     <div
       className={`inline-flex items-center justify-center rounded-full font-semibold select-none ${className ?? ''}`}

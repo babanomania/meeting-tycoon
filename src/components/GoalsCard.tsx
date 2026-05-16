@@ -1,20 +1,44 @@
-import type { Kpis, QuarterlyGoal } from '@/game/types';
+import type { Kpis, QuarterlyGoal, Stakeholder } from '@/game/types';
 import { Icon, type IconName } from './Icon';
 
 interface Props {
   goals: QuarterlyGoal[];
   kpis: Kpis;
+  stakeholders: Stakeholder[];
 }
 
 /** Map quarterly goal id → icon name. Avoids leaking emoji strings to the UI. */
 const GOAL_ICON: Record<string, IconName> = {
+  'g-boss':       'briefcase',
   'g-alignment':  'compass',
   'g-visibility': 'eye',
   'g-burnout':    'fire',
-  'g-confidence': 'briefcase',
+  'g-confidence': 'star',
 };
 
-export function GoalsCard({ goals, kpis }: Props) {
+/** Read the current value behind a goal — KPI or stakeholder relationship. */
+function goalCurrentValue(g: QuarterlyGoal, kpis: Kpis, stakeholders: Stakeholder[]): number {
+  if (g.kpi) return kpis[g.kpi];
+  if (g.stakeholderId) {
+    const s = stakeholders.find((x) => x.id === g.stakeholderId);
+    return s?.relationship ?? 0;
+  }
+  return 0;
+}
+
+function isAchieved(g: QuarterlyGoal, current: number): boolean {
+  return g.lowerIsBetter ? current <= g.target : current >= g.target;
+}
+
+function goalProgress(g: QuarterlyGoal, current: number): number {
+  if (g.lowerIsBetter) {
+    return Math.max(0, Math.min(100, ((100 - current) / (100 - g.target)) * 100));
+  }
+  return Math.max(0, Math.min(100, (current / g.target) * 100));
+}
+
+export function GoalsCard({ goals, kpis, stakeholders }: Props) {
+  const hits = goals.filter((g) => isAchieved(g, goalCurrentValue(g, kpis, stakeholders))).length;
   return (
     <div className="bg-white rounded-md border border-ink-100 shadow-el-1 px-4 py-3.5">
       <div className="flex items-center justify-between mb-3">
@@ -22,14 +46,14 @@ export function GoalsCard({ goals, kpis }: Props) {
           Quarterly Goals
         </div>
         <span className="text-[11px] font-semibold text-ink-500 tabular-nums">
-          {goals.filter((g) => isAchieved(g, kpis)).length} / {goals.length} hit
+          {hits} / {goals.length} hit
         </span>
       </div>
       <ul className="space-y-3">
         {goals.map((g) => {
-          const v = kpis[g.kpi];
-          const pct = goalProgress(g, kpis);
-          const ok = isAchieved(g, kpis);
+          const v = goalCurrentValue(g, kpis, stakeholders);
+          const pct = goalProgress(g, v);
+          const ok = isAchieved(g, v);
           return (
             <li key={g.id}>
               <div className="flex items-center justify-between text-[13px]">
@@ -63,14 +87,5 @@ export function GoalsCard({ goals, kpis }: Props) {
   );
 }
 
-function isAchieved(g: QuarterlyGoal, kpis: Kpis): boolean {
-  return g.lowerIsBetter ? kpis[g.kpi] <= g.target : kpis[g.kpi] >= g.target;
-}
-
-function goalProgress(g: QuarterlyGoal, kpis: Kpis): number {
-  if (g.lowerIsBetter) {
-    const v = kpis[g.kpi];
-    return Math.max(0, Math.min(100, ((100 - v) / (100 - g.target)) * 100));
-  }
-  return Math.max(0, Math.min(100, (kpis[g.kpi] / g.target) * 100));
-}
+/** Helpers re-exported so other surfaces (Calendar pill, etc.) can compute the same thing. */
+export { isAchieved as isGoalAchieved, goalCurrentValue, goalProgress };

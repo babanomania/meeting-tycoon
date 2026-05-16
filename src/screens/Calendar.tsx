@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useGame, DAILY_ACCEPT_CAP, pendingRequestsFor } from '@/game/store';
-import { MEETING_TYPES } from '@/game/data';
+import { MEETING_TYPES, STAGE1_GOALS } from '@/game/data';
 import { Icon } from '@/components/Icon';
-import type { MeetingPriority } from '@/game/types';
+import { isGoalAchieved, goalCurrentValue } from '@/components/GoalsCard';
+import type { MeetingPriority, Kpis, Stakeholder } from '@/game/types';
 
 const HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
 
@@ -54,6 +55,8 @@ export function CalendarScreen() {
   const setScreen = useGame((s) => s.setScreen);
   const endDay = useGame((s) => s.endDay);
   const openDetail = useGame((s) => s.openDetail);
+  const kpis = useGame((s) => s.kpis);
+  const stakeholders = useGame((s) => s.stakeholders);
 
   const totalMin = schedule.reduce((a, m) => a + MEETING_TYPES[m.typeId].durationMin, 0);
   const focusHrs = Math.max(0, Math.round(((540 - totalMin) / 60) * 10) / 10);
@@ -90,6 +93,9 @@ export function CalendarScreen() {
           )}
         </button>
       </div>
+
+      {/* Goals pill row — always visible reminder of what you're chasing this week */}
+      <GoalsPillRow kpis={kpis} stakeholders={stakeholders} onTap={() => setScreen('metrics')} />
 
       {/* Capacity row */}
       <div className="px-5 py-2.5 bg-ink-50/60 border-b border-ink-100 flex items-center justify-between text-[11.5px]">
@@ -130,6 +136,48 @@ export function CalendarScreen() {
         )}
       </div>
     </div>
+  );
+}
+
+function GoalsPillRow({
+  kpis,
+  stakeholders,
+  onTap,
+}: {
+  kpis: Kpis;
+  stakeholders: Stakeholder[];
+  onTap: () => void;
+}) {
+  const hits = STAGE1_GOALS.filter((g) =>
+    isGoalAchieved(g, goalCurrentValue(g, kpis, stakeholders)),
+  ).length;
+  return (
+    <button
+      onClick={onTap}
+      className="w-full px-5 py-2 border-b border-ink-100 flex items-center gap-2 text-left hover:bg-ink-50 transition"
+    >
+      <Icon name="target" size={13} className="text-brand-600 shrink-0" />
+      <span className="text-[10.5px] font-semibold uppercase tracking-wider text-ink-500 shrink-0">
+        Goals
+      </span>
+      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+        {STAGE1_GOALS.map((g) => {
+          const v = goalCurrentValue(g, kpis, stakeholders);
+          const ok = isGoalAchieved(g, v);
+          return (
+            <span
+              key={g.id}
+              title={`${g.label}: ${v} / ${g.target}`}
+              className={`flex-1 h-1.5 rounded-full ${ok ? 'bg-emerald-500' : 'bg-ink-200'}`}
+            />
+          );
+        })}
+      </div>
+      <span className="text-[11px] font-bold text-ink-600 tabular-nums shrink-0">
+        {hits}/{STAGE1_GOALS.length}
+      </span>
+      <Icon name="chevron-right" size={13} className="text-ink-400 shrink-0" />
+    </button>
   );
 }
 

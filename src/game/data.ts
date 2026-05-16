@@ -300,10 +300,11 @@ export const CHAOS_EVENTS: ChaosEvent[] = [
 
 /** Stage 1 quarterly goals — visible on Overview as progress bars. */
 export const STAGE1_GOALS: QuarterlyGoal[] = [
-  { id: 'g-alignment', label: 'Improve Alignment', kpi: 'alignment', emoji: '🧭', target: 60 },
-  { id: 'g-visibility', label: 'Increase Visibility', kpi: 'visibility', emoji: '👁️', target: 55 },
-  { id: 'g-burnout', label: 'Keep Burnout Sustainable', kpi: 'burnout', emoji: '🔥', target: 60, lowerIsBetter: true },
-  { id: 'g-confidence', label: 'Win the Strategy Award', kpi: 'executiveConfidence', emoji: '🏆', target: 65 },
+  { id: 'g-boss',       label: 'Keep the Boss Happy',     stakeholderId: 'boss', emoji: '', target: 70 },
+  { id: 'g-alignment',  label: 'Improve Alignment',       kpi: 'alignment',      emoji: '🧭', target: 60 },
+  { id: 'g-visibility', label: 'Increase Visibility',     kpi: 'visibility',     emoji: '👁️', target: 55 },
+  { id: 'g-burnout',    label: 'Keep Burnout Sustainable', kpi: 'burnout',       emoji: '🔥', target: 60, lowerIsBetter: true },
+  { id: 'g-confidence', label: 'Win the Strategy Award',  kpi: 'executiveConfidence', emoji: '🏆', target: 65 },
 ];
 
 /** Boss feedback rules — picked by KPI delta scoring after Day 1. */

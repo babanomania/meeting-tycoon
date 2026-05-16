@@ -8,10 +8,11 @@ import { MeetingDetailSheet } from './components/MeetingDetailSheet';
 import { Onboarding } from './screens/Onboarding';
 import { CalendarScreen } from './screens/Calendar';
 import { InboxScreen } from './screens/Inbox';
+import { ChatScreen } from './screens/Chat';
+import { ChatThread } from './screens/ChatThread';
 import { DaySummary } from './screens/DaySummary';
 import { Metrics } from './screens/Metrics';
-import { Activity } from './screens/Activity';
-import { More } from './screens/More';
+import { People } from './screens/People';
 import { GameOver } from './screens/GameOver';
 import { StageUnlock } from './screens/StageUnlock';
 import { pendingRequestsFor } from './game/store';
@@ -23,8 +24,7 @@ const ANIM = {
   transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const },
 };
 
-/** Screens that show the persistent bottom nav. */
-const NAV_SCREENS = new Set<string>(['calendar', 'inbox', 'activity', 'metrics', 'more']);
+const NAV_SCREENS = new Set<string>(['calendar', 'inbox', 'chat', 'metrics', 'people']);
 
 export function App() {
   const screen = useGame((s) => s.screen);
@@ -34,8 +34,10 @@ export function App() {
   const day = useGame((s) => s.day);
   const accepted = useGame((s) => s.acceptedRequestIds);
   const schedule = useGame((s) => s.schedule);
+  const conversations = useGame((s) => s.conversations);
+  const openConversationId = useGame((s) => s.openConversationId);
+  const readIds = useGame((s) => s.readConversationIds);
 
-  // Auto-route into game-over / stage-unlock when they fire.
   useEffect(() => {
     if (gameOver && screen !== 'game-over') setScreen('game-over');
     else if (stageUnlocked && !gameOver && screen !== 'stage-unlock') setScreen('stage-unlock');
@@ -45,15 +47,24 @@ export function App() {
     () => pendingRequestsFor(day, accepted, schedule).length,
     [day, accepted, schedule],
   );
+  // Chat unread = any conversation with pending reply not yet opened, or any
+  // group/meeting whose newest message landed after we last visited Chat list.
+  const chatUnread = useMemo(() => {
+    let n = 0;
+    for (const c of conversations) {
+      if (c.pendingReplyOptions && !readIds.includes(c.id)) n++;
+    }
+    return n;
+  }, [conversations, readIds]);
 
   const showBottomNav = NAV_SCREENS.has(screen);
 
   const navActive: NavId | undefined =
-    screen === 'activity'  ? 'activity'  :
+    screen === 'chat'      ? 'chat'      :
     screen === 'calendar'  ? 'calendar'  :
     screen === 'inbox'     ? 'inbox'     :
     screen === 'metrics'   ? 'metrics'   :
-    screen === 'more'      ? 'more'      :
+    screen === 'people'    ? 'people'    :
     undefined;
 
   const content = (() => {
@@ -61,23 +72,28 @@ export function App() {
       case 'onboarding':   return <Onboarding key="onboarding" />;
       case 'calendar':     return <CalendarScreen key="calendar" />;
       case 'inbox':        return <InboxScreen key="inbox" />;
+      case 'chat':         return <ChatScreen key="chat" />;
       case 'day-summary':  return <DaySummary key="day-summary" />;
       case 'metrics':      return <Metrics key="metrics" />;
-      case 'activity':     return <Activity key="activity" />;
-      case 'more':         return <More key="more" />;
+      case 'people':       return <People key="people" />;
       case 'game-over':    return <GameOver key="game-over" />;
       case 'stage-unlock': return <StageUnlock key="stage-unlock" />;
     }
   })();
 
+  // ChatThread is rendered as a full-screen overlay on top of any nav screen
+  // when openConversationId is set — mimics opening a chat thread in Teams.
+  const threadOpen = !!openConversationId && showBottomNav;
+
   return (
     <PhoneFrame
       bottomNav={
-        showBottomNav ? (
+        showBottomNav && !threadOpen ? (
           <BottomNav
             active={navActive}
             inboxCount={inboxCount}
-            onNavigate={(id) => setScreen(id as 'calendar' | 'inbox' | 'activity' | 'metrics' | 'more')}
+            chatUnread={chatUnread}
+            onNavigate={(id) => setScreen(id as 'calendar' | 'inbox' | 'chat' | 'metrics' | 'people')}
           />
         ) : null
       }
@@ -87,9 +103,25 @@ export function App() {
           {content}
         </motion.div>
       </AnimatePresence>
-      {/* Chaos modal — only meaningful while accepting requests in the Inbox. */}
+
+      {/* Full-screen chat thread overlay */}
+      <AnimatePresence>
+        {threadOpen && (
+          <motion.div
+            key="chat-thread"
+            initial={{ x: 60, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 60, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute inset-0 bg-white z-30"
+          >
+            <ChatThread />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modals */}
       {screen === 'inbox' && <ChaosModal />}
-      {/* Meeting detail bottom-sheet — anchored to whichever screen is showing the calendar. */}
       {(screen === 'calendar' || screen === 'inbox') && <MeetingDetailSheet />}
     </PhoneFrame>
   );

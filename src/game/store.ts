@@ -3,6 +3,9 @@ import { persist } from 'zustand/middleware';
 import type {
   ActivityEntry,
   ChaosResponse,
+  ChatEvent,
+  ChatMessage,
+  Conversation,
   DayResult,
   FlowScreen,
   GameOver,
@@ -10,13 +13,29 @@ import type {
   KpiDelta,
   MeetingTypeId,
   ScheduledMeeting,
+  Stakeholder,
 } from './types';
+import {
+  STAKEHOLDERS_SEED,
+  adjustRelationship,
+  senderToStakeholder,
+} from './politics';
 import {
   CHAOS_EVENTS,
   MEETING_TYPES,
   STAGE1_GOALS,
   requestsForDay,
 } from './data';
+import {
+  DM_PROFILES,
+  DM_TEMPLATES,
+  EVENT_REACTIONS,
+  MEETING_CHAT_META,
+  MEETING_HELD_TEMPLATES,
+  buildInitialChat,
+  makeMessage,
+  type DmTemplate,
+} from './chat';
 import type { BossFeedback } from './types';
 
 const STARTING_KPIS: Kpis = {
@@ -29,7 +48,6 @@ const STARTING_KPIS: Kpis = {
 };
 
 const STAGE1_LAST_DAY = 5;
-/** Max number of non-recurring meetings the player can accept per day. */
 const DAILY_ACCEPT_CAP = 5;
 
 const clamp = (n: number) => Math.max(0, Math.min(100, n));
@@ -50,79 +68,6 @@ const sumDeltas = (a: KpiDelta, b: KpiDelta): KpiDelta => {
   }
   return out;
 };
-
-/**
- * Pick a boss reaction. Goal status takes priority over generic KPI rules so the
- * boss feels like she's tracking your quarter, not just today's delta.
- */
-function bossFeedbackFor(prevKpis: Kpis, nextKpis: Kpis, sched: number): BossFeedback {
-  const hit = STAGE1_GOALS.filter((g) =>
-    g.lowerIsBetter ? nextKpis[g.kpi] <= g.target : nextKpis[g.kpi] >= g.target,
-  );
-  const justHit = hit.filter((g) =>
-    g.lowerIsBetter ? prevKpis[g.kpi] > g.target : prevKpis[g.kpi] < g.target,
-  );
-  const justLost = STAGE1_GOALS.filter((g) => {
-    const wasHit = g.lowerIsBetter ? prevKpis[g.kpi] <= g.target : prevKpis[g.kpi] >= g.target;
-    const stillHit = g.lowerIsBetter ? nextKpis[g.kpi] <= g.target : nextKpis[g.kpi] >= g.target;
-    return wasHit && !stillHit;
-  });
-
-  // All four goals achieved — the rare "win"
-  if (hit.length === STAGE1_GOALS.length) {
-    return {
-      emoji: '🏆',
-      text: `All four quarterly goals hit. The CFO is "circling back to celebrate the celebration."`,
-    };
-  }
-  if (justLost.length > 0) {
-    const g = justLost[0];
-    return {
-      emoji: '📉',
-      text: `You just lost the ${g.label} goal. We'll need a 30-min "alignment chat" tomorrow.`,
-    };
-  }
-  if (justHit.length > 0) {
-    const g = justHit[0];
-    return {
-      emoji: '🎯',
-      text: `Hit the ${g.label} target today. I've already taken credit on LinkedIn.`,
-    };
-  }
-
-  // Pressure when burnout is high
-  if (nextKpis.burnout >= 70) {
-    return {
-      emoji: '😬',
-      text: `Burnout is at ${nextKpis.burnout}. HR is preparing "wellness resources". Keep pushing.`,
-    };
-  }
-  // Pressure when productivity is bottoming out
-  if (nextKpis.productivity <= 15) {
-    return {
-      emoji: '🤨',
-      text: `Productivity is ${nextKpis.productivity}. Visibility is what matters, but eyebrows are being raised.`,
-    };
-  }
-  // Empty day
-  if (sched === 0) {
-    return {
-      emoji: '😐',
-      text: `You held no meetings today. Bold. Possibly career-limiting.`,
-    };
-  }
-  // Cram day
-  if (sched >= 6) {
-    return {
-      emoji: '🤩',
-      text: `Now THIS is what visibility looks like. Burnout is a feature, not a bug.`,
-    };
-  }
-  return {
-    emoji: '🙂',
-    text: `Promising day. Let's circle back tomorrow on the circling-back cadence.`,
-  };
-}
 
 const checkGameOver = (k: Kpis): GameOver | null => {
   if (k.morale <= 10) {
@@ -171,8 +116,21 @@ interface GameState {
   gameOver: GameOver | null;
   stageUnlocked: 2 | 3 | 4 | 5 | null;
 
-  /** Meeting currently shown in the bottom-sheet detail view. null = closed. */
   detailUid: string | null;
+
+  // ── Chat ───────────────────────────────────────────────────────────────
+  conversations: Conversation[];
+  /** Messages map: conversationId → array of messages (chronological). */
+  messages: Record<string, ChatMessage[]>;
+  /** When a conversation is open in the thread view; null = list view. */
+  openConversationId: string | null;
+  /** Which DM templates have fired this run — prevents repeats. */
+  dmTemplateHistoryIds: string[];
+  /** Which conversations the player has opened since last new message. */
+  readConversationIds: string[];
+
+  /** Politics — relationship scores per key stakeholder. */
+  stakeholders: Stakeholder[];
 
   setScreen: (s: FlowScreen) => void;
   acceptRequest: (requestId: string) => void;
@@ -182,10 +140,15 @@ interface GameState {
   closeDetail: () => void;
   maybeTriggerChaos: () => void;
   resolveChaos: (response: ChaosResponse) => void;
+  openConversation: (id: string) => void;
+  closeConversation: () => void;
+  replyInConversation: (id: string, replyIdx: number) => void;
   endDay: () => DayResult;
   continueToNextDay: () => void;
   clearStageUnlock: () => void;
   resetGame: () => void;
+  /** Seeds the first day's chat at the end of onboarding. */
+  startGame: () => void;
 }
 
 const findFreeSlot = (schedule: ScheduledMeeting[], durationMin: number): number => {
@@ -210,24 +173,13 @@ const logActivity = (
   ...list,
 ];
 
-/** How many non-recurring requests the player has actively accepted today. */
 const countAcceptsToday = (acceptedIds: string[]): number =>
   acceptedIds.filter((id) => !id.startsWith('decline:') && !id.startsWith('chaos-')).length;
 
-/**
- * Project a KPI delta over current state, returning the *new* values. Used by the
- * inbox to preview "what happens if you accept this".
- */
 export function projectKpis(current: Kpis, delta: KpiDelta): Kpis {
   return applyDelta(current, delta);
 }
 
-/**
- * The single source of truth for "what's still in the inbox today".
- * - Filters out accepted and declined requests
- * - Filters out recurring requests whose typeId is already on the calendar
- *   (so e.g. "Team Standup" doesn't keep re-appearing once accepted once)
- */
 export function pendingRequestsFor(
   day: number,
   acceptedIds: string[],
@@ -241,6 +193,159 @@ export function pendingRequestsFor(
     if (t.priority === 'recurring' && recurringTypeIds.has(r.typeId)) return false;
     return true;
   });
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Chat helpers
+// ──────────────────────────────────────────────────────────────────────────
+
+/**
+ * Pure helper: given current state and an incoming chat event, return the
+ * new (conversations, messages) maps with any reactions appended.
+ */
+function applyChatEvent(
+  conversations: Conversation[],
+  messages: Record<string, ChatMessage[]>,
+  event: ChatEvent,
+): { conversations: Conversation[]; messages: Record<string, ChatMessage[]> } {
+  const now = Date.now();
+  let nextConvos = conversations;
+  let nextMessages = messages;
+
+  // Run all matching reactions for this event.
+  for (const rule of EVENT_REACTIONS) {
+    if (!rule.match(event)) continue;
+    for (const r of rule.reactions) {
+      // Find / ensure the conversation exists. (Group channels are seeded;
+      // meeting chats are created lazily elsewhere.)
+      if (!nextConvos.some((c) => c.id === r.conversationId)) continue;
+      const msg = makeMessage(r.conversationId, r.sender, r.body(event), now, r.reactions);
+      nextMessages = {
+        ...nextMessages,
+        [r.conversationId]: [...(nextMessages[r.conversationId] ?? []), msg],
+      };
+      nextConvos = nextConvos.map((c) =>
+        c.id === r.conversationId ? { ...c, lastMessageAt: now } : c,
+      );
+    }
+  }
+
+  return { conversations: nextConvos, messages: nextMessages };
+}
+
+/** Pick a DM template of the given trigger that hasn't fired this run. */
+function pickDmTemplate(
+  trigger: DmTemplate['trigger'],
+  history: string[],
+): DmTemplate | null {
+  const pool = DM_TEMPLATES.filter((t) => t.trigger === trigger && !history.includes(t.templateId));
+  if (pool.length === 0) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/** Materialize a DM conversation + its incoming message + reply options. */
+function instantiateDm(
+  template: DmTemplate,
+  now: number,
+  conversations: Conversation[],
+  messages: Record<string, ChatMessage[]>,
+): {
+  conversations: Conversation[];
+  messages: Record<string, ChatMessage[]>;
+} {
+  const profile = DM_PROFILES[template.dmKey];
+  if (!profile) return { conversations, messages };
+
+  const existing = conversations.find((c) => c.id === profile.id);
+  const baseConvo: Conversation = existing ?? {
+    id: profile.id,
+    kind: 'dm',
+    name: profile.name,
+    subtitle: profile.role,
+    participants: [profile.name],
+    isSystem: profile.isSystem,
+    lastMessageAt: now,
+  };
+  const newConvo: Conversation = {
+    ...baseConvo,
+    pendingReplyOptions: template.options,
+    lastMessageAt: now,
+  };
+
+  const msg = makeMessage(profile.id, profile.name, template.body, now);
+  return {
+    conversations: existing
+      ? conversations.map((c) => (c.id === profile.id ? newConvo : c))
+      : [...conversations, newConvo],
+    messages: {
+      ...messages,
+      [profile.id]: [...(messages[profile.id] ?? []), msg],
+    },
+  };
+}
+
+/** Add or update a meeting chat conversation when a meeting is scheduled. */
+function ensureMeetingChat(
+  meetingTypeId: MeetingTypeId,
+  conversations: Conversation[],
+  messages: Record<string, ChatMessage[]>,
+  now: number,
+): {
+  conversations: Conversation[];
+  messages: Record<string, ChatMessage[]>;
+} {
+  const id = `meeting-${meetingTypeId}`;
+  if (conversations.some((c) => c.id === id)) return { conversations, messages };
+  const meta = MEETING_CHAT_META[meetingTypeId];
+  const type = MEETING_TYPES[meetingTypeId];
+  const newConvo: Conversation = {
+    id,
+    kind: 'meeting',
+    name: type.title,
+    subtitle: `${meta.participants.length} participants · ${type.durationMin}m`,
+    participants: meta.participants,
+    lastMessageAt: now,
+  };
+  const seedMsg = makeMessage(id, 'KPI Bot', `Chat created for "${type.title}".`, now - 1000);
+  return {
+    conversations: [...conversations, newConvo],
+    messages: { ...messages, [id]: [seedMsg] },
+  };
+}
+
+/** Generate post-meeting follow-up messages for each meeting that "happened" today. */
+function fireMeetingHeldMessages(
+  schedule: ScheduledMeeting[],
+  conversations: Conversation[],
+  messages: Record<string, ChatMessage[]>,
+  now: number,
+): {
+  conversations: Conversation[];
+  messages: Record<string, ChatMessage[]>;
+} {
+  let convos = conversations;
+  let msgs = messages;
+  const typesHeld = new Set<MeetingTypeId>();
+  for (const m of schedule) {
+    if (m.uid.startsWith('chaos-')) continue;
+    typesHeld.add(m.typeId);
+  }
+  for (const typeId of typesHeld) {
+    const templates = MEETING_HELD_TEMPLATES[typeId];
+    if (!templates) continue;
+    const id = `meeting-${typeId}`;
+    // Make sure the meeting chat exists
+    const ensured = ensureMeetingChat(typeId, convos, msgs, now);
+    convos = ensured.conversations;
+    msgs = ensured.messages;
+    // Append 1-2 follow-up messages
+    for (const t of templates.slice(0, 2)) {
+      const msg = makeMessage(id, t.sender, t.body, now, t.reactions);
+      msgs = { ...msgs, [id]: [...(msgs[id] ?? []), msg] };
+    }
+    convos = convos.map((c) => (c.id === id ? { ...c, lastMessageAt: now } : c));
+  }
+  return { conversations: convos, messages: msgs };
 }
 
 export const useGame = create<GameState>()(
@@ -261,6 +366,12 @@ export const useGame = create<GameState>()(
       gameOver: null,
       stageUnlocked: null,
       detailUid: null,
+      conversations: [],
+      messages: {},
+      openConversationId: null,
+      dmTemplateHistoryIds: [],
+      readConversationIds: [],
+      stakeholders: STAKEHOLDERS_SEED,
 
       setScreen: (s) => set({ screen: s }),
 
@@ -271,13 +382,32 @@ export const useGame = create<GameState>()(
         if (get().acceptedRequestIds.includes(requestId)) return;
 
         const beforeCount = countAcceptsToday(get().acceptedRequestIds);
-        // Cap on new accepts per day — recurring carry-overs don't count.
         if (beforeCount >= DAILY_ACCEPT_CAP) return;
 
         const type = MEETING_TYPES[req.typeId];
         const start = findFreeSlot(get().schedule, type.durationMin);
         if (start < 0) return;
         const isRecurring = type.priority === 'recurring';
+
+        // Materialize meeting chat for this type if not already there.
+        const now = Date.now();
+        const { conversations: convos1, messages: msgs1 } = ensureMeetingChat(
+          req.typeId as MeetingTypeId,
+          get().conversations,
+          get().messages,
+          now,
+        );
+
+        // Fire any group-channel reactions.
+        const evt: ChatEvent = { type: 'meeting-accepted', meetingTypeId: req.typeId as MeetingTypeId };
+        const { conversations: convos2, messages: msgs2 } = applyChatEvent(convos1, msgs1, evt);
+
+        // Politics: accepting from a stakeholder is a small relationship boost.
+        const stakeholderId = senderToStakeholder(req.from);
+        const nextStakeholders = stakeholderId
+          ? adjustRelationship(get().stakeholders, stakeholderId, +5, `Accepted ${type.title}`)
+          : get().stakeholders;
+
         set((s) => ({
           schedule: [
             ...s.schedule,
@@ -298,14 +428,13 @@ export const useGame = create<GameState>()(
               : `${req.from} · ${type.durationMin}m`,
             from: req.from,
           }),
+          conversations: convos2,
+          messages: msgs2,
+          stakeholders: nextStakeholders,
         }));
 
-        // Chaos trigger lives here (not in a React effect) so it fires exactly
-        // once at the moment the count crosses a threshold — not every time
-        // `activeChaos` toggles.
         const afterCount = beforeCount + 1;
         if ((afterCount === 2 || afterCount === 4) && !get().activeChaos) {
-          // Defer slightly so the request-accept animation can play before the modal slams in.
           setTimeout(() => {
             if (get().activeChaos) return;
             const available = CHAOS_EVENTS.filter((e) => !get().triggeredChaosIds.includes(e.id));
@@ -315,6 +444,24 @@ export const useGame = create<GameState>()(
             set({ activeChaos: { id: picked.id, uid: `chaos-${Date.now()}` } });
           }, 350);
         }
+
+        // ~50% chance an on-accept DM lands right after.
+        if (Math.random() < 0.5) {
+          const tpl = pickDmTemplate('on-accept', get().dmTemplateHistoryIds);
+          if (tpl) {
+            const { conversations: c3, messages: m3 } = instantiateDm(
+              tpl,
+              Date.now(),
+              get().conversations,
+              get().messages,
+            );
+            set({
+              conversations: c3,
+              messages: m3,
+              dmTemplateHistoryIds: [...get().dmTemplateHistoryIds, tpl.templateId],
+            });
+          }
+        }
       },
 
       declineRequest: (requestId) => {
@@ -323,9 +470,6 @@ export const useGame = create<GameState>()(
         if (!req) return;
         if (get().acceptedRequestIds.includes(`decline:${requestId}`)) return;
 
-        // Decline cost — varies by who/what you're saying no to. Applied immediately
-        // so the player feels the consequence (and so it's reflected in the
-        // goal-projection on the next request they look at).
         const t = MEETING_TYPES[req.typeId];
         let cost: KpiDelta = {};
         let detail = `${req.from} did not take it well.`;
@@ -341,10 +485,28 @@ export const useGame = create<GameState>()(
         } else if (t.priority === 'medium') {
           cost = { alignment: -1 };
         } else {
-          // optional / low — declining is essentially free
           cost = {};
           detail = `${req.from} understood. (Probably.)`;
         }
+
+        // Group channel reactions.
+        const { conversations: convos2, messages: msgs2 } = applyChatEvent(
+          get().conversations,
+          get().messages,
+          { type: 'meeting-declined', meetingTypeId: req.typeId as MeetingTypeId },
+        );
+
+        // Politics: declining a stakeholder hits the relationship — scaled by priority.
+        const stakeholderId = senderToStakeholder(req.from);
+        const declineDelta =
+          t.priority === 'crisis' ? -14 :
+          t.priority === 'high'   ? -10 :
+          t.priority === 'recurring' ? -6 :
+          t.priority === 'medium' ? -4 :
+          -1;
+        const nextStakeholders = stakeholderId
+          ? adjustRelationship(get().stakeholders, stakeholderId, declineDelta, `Declined ${t.title}`)
+          : get().stakeholders;
 
         set((s) => ({
           acceptedRequestIds: [...s.acceptedRequestIds, `decline:${requestId}`],
@@ -355,14 +517,34 @@ export const useGame = create<GameState>()(
             detail,
             from: req.from,
           }),
+          conversations: convos2,
+          messages: msgs2,
+          stakeholders: nextStakeholders,
         }));
+
+        // High/crisis declines often trigger a DM follow-up.
+        if ((t.priority === 'high' || t.priority === 'crisis') && Math.random() < 0.7) {
+          const tpl = pickDmTemplate('on-decline', get().dmTemplateHistoryIds);
+          if (tpl) {
+            const { conversations: c3, messages: m3 } = instantiateDm(
+              tpl,
+              Date.now(),
+              get().conversations,
+              get().messages,
+            );
+            set({
+              conversations: c3,
+              messages: m3,
+              dmTemplateHistoryIds: [...get().dmTemplateHistoryIds, tpl.templateId],
+            });
+          }
+        }
       },
 
       removeScheduled: (uid) => {
         const removed = get().schedule.find((m) => m.uid === uid);
         set((s) => ({
           schedule: s.schedule.filter((m) => m.uid !== uid),
-          // Drop both accept marker AND any recurring-carry marker
           acceptedRequestIds: s.acceptedRequestIds.filter(
             (id) => id !== uid && id !== `recurring:${uid}`,
           ),
@@ -431,6 +613,23 @@ export const useGame = create<GameState>()(
             ? 'chaos-delegated'
             : 'chaos-rescheduled';
 
+        // Fire group channel reaction.
+        const { conversations: convos2, messages: msgs2 } = applyChatEvent(
+          s.conversations,
+          s.messages,
+          { type: 'chaos-resolved', chaosId: ev.id, response },
+        );
+
+        // Politics: how the player responded to chaos hits the requesting stakeholder.
+        const chaosStakeholderId = senderToStakeholder(ev.fromWho);
+        const chaosRelDelta =
+          response === 'attend' ? +8 :
+          response === 'delegate' ? -3 :
+          /* reschedule */ -6;
+        const nextStakeholders = chaosStakeholderId
+          ? adjustRelationship(s.stakeholders, chaosStakeholderId, chaosRelDelta, `${label} their chaos event`)
+          : s.stakeholders;
+
         set({
           activeChaos: null,
           triggeredChaosIds: [...s.triggeredChaosIds, ev.id],
@@ -442,6 +641,69 @@ export const useGame = create<GameState>()(
             detail: ev.flavor,
             from: ev.fromWho,
           }),
+          conversations: convos2,
+          messages: msgs2,
+          stakeholders: nextStakeholders,
+        });
+
+        // After a chaos resolves, fire a follow-up DM.
+        const tpl = pickDmTemplate('on-chaos', get().dmTemplateHistoryIds);
+        if (tpl) {
+          const { conversations: c3, messages: m3 } = instantiateDm(
+            tpl,
+            Date.now(),
+            get().conversations,
+            get().messages,
+          );
+          set({
+            conversations: c3,
+            messages: m3,
+            dmTemplateHistoryIds: [...get().dmTemplateHistoryIds, tpl.templateId],
+          });
+        }
+      },
+
+      openConversation: (id) =>
+        set((s) => ({
+          openConversationId: id,
+          readConversationIds: s.readConversationIds.includes(id)
+            ? s.readConversationIds
+            : [...s.readConversationIds, id],
+        })),
+      closeConversation: () => set({ openConversationId: null }),
+
+      replyInConversation: (id, replyIdx) => {
+        const s = get();
+        const convo = s.conversations.find((c) => c.id === id);
+        if (!convo || !convo.pendingReplyOptions) return;
+        const reply = convo.pendingReplyOptions[replyIdx];
+        if (!reply) return;
+
+        const now = Date.now();
+        const outgoing = makeMessage(id, 'You', reply.text, now, undefined, true);
+
+        // Politics: replying to a stakeholder's DM shifts the relationship.
+        // Index-based heuristic: option 0 = warm reply (+3), option 1 = neutral (0),
+        // option 2 = pushback (-4). Picks up most templates without hand-tuning.
+        const stakeholderId = senderToStakeholder(convo.name);
+        const replyDelta = replyIdx === 0 ? +3 : replyIdx === 1 ? 0 : -4;
+        const nextStakeholders = stakeholderId
+          ? adjustRelationship(s.stakeholders, stakeholderId, replyDelta, `Replied "${reply.text.slice(0, 32)}"`)
+          : s.stakeholders;
+
+        set({
+          conversations: s.conversations.map((c) =>
+            c.id === id ? { ...c, pendingReplyOptions: undefined, lastMessageAt: now } : c,
+          ),
+          messages: { ...s.messages, [id]: [...(s.messages[id] ?? []), outgoing] },
+          kpis: applyDelta(s.kpis, reply.delta),
+          activityToday: logActivity(s.activityToday, {
+            kind: 'ping-replied',
+            title: `${convo.name}: ${reply.text}`,
+            detail: reply.log,
+            from: convo.name,
+          }),
+          stakeholders: nextStakeholders,
         });
       },
 
@@ -459,19 +721,11 @@ export const useGame = create<GameState>()(
 
         const totalDelta = sumDeltas(meetingsDelta, s.chaosDelta);
 
-        const timeInMeetingsMin = sched.reduce(
-          (a, m) => a + MEETING_TYPES[m.typeId].durationMin,
-          0,
-        );
-        const peopleMet = sched.reduce(
-          (a, m) => a + MEETING_TYPES[m.typeId].attendees,
-          0,
-        );
+        const timeInMeetingsMin = sched.reduce((a, m) => a + MEETING_TYPES[m.typeId].durationMin, 0);
+        const peopleMet = sched.reduce((a, m) => a + MEETING_TYPES[m.typeId].attendees, 0);
         const decisionsMade = Math.max(0, Math.round(sched.length * 0.15));
 
-        const nextKpis = applyDelta(s.kpis, totalDelta);
-        const over = checkGameOver(nextKpis);
-        const feedback = bossFeedbackFor(s.kpis, nextKpis, sched.length);
+        const feedback = pickBossFeedback(totalDelta, sched.length);
 
         const result: DayResult = {
           meetingsHeld: sched.length,
@@ -483,12 +737,31 @@ export const useGame = create<GameState>()(
           boss: feedback,
         };
 
+        const nextKpis = applyDelta(s.kpis, totalDelta);
+        const over = checkGameOver(nextKpis);
+
+        // Fire post-meeting messages in each meeting chat.
+        const { conversations: convos1, messages: msgs1 } = fireMeetingHeldMessages(
+          sched,
+          s.conversations,
+          s.messages,
+          Date.now(),
+        );
+        // Fire end-of-day sentiment reactions in group channels.
+        const { conversations: convos2, messages: msgs2 } = applyChatEvent(
+          convos1,
+          msgs1,
+          { type: 'day-end', kpis: nextKpis },
+        );
+
         set({
           lastResult: result,
           kpis: nextKpis,
           history: [...s.history, nextKpis],
           gameOver: over,
           activeChaos: null,
+          conversations: convos2,
+          messages: msgs2,
         });
         return result;
       },
@@ -497,8 +770,6 @@ export const useGame = create<GameState>()(
         const s = get();
         const finishedStage1 = s.stage === 1 && s.day >= STAGE1_LAST_DAY;
 
-        // Carry recurring meetings forward, re-slotted to their original times
-        // so the player wakes up with their recurring calendar already populated.
         const recurringCarry: ScheduledMeeting[] = s.schedule
           .filter((m) => m.recurring)
           .map((m, idx) => ({
@@ -506,9 +777,25 @@ export const useGame = create<GameState>()(
             uid: `recurring-d${s.day + 1}-${idx}-${m.typeId}`,
           }));
 
-        // Mark them as "auto-accepted" so they're not counted toward the daily cap
-        // and don't appear in the inbox.
         const recurringAcceptedIds = recurringCarry.map((m) => `recurring:${m.uid}`);
+
+        const now = Date.now();
+        // Seed morning DM(s) for new day.
+        let convos = s.conversations;
+        let msgs = s.messages;
+        let history = s.dmTemplateHistoryIds;
+        for (let i = 0; i < 2; i++) {
+          const tpl = pickDmTemplate('morning', history);
+          if (!tpl) break;
+          const r = instantiateDm(tpl, now + i, convos, msgs);
+          convos = r.conversations;
+          msgs = r.messages;
+          history = [...history, tpl.templateId];
+        }
+        // Day-start group reactions.
+        const dayStartFx = applyChatEvent(convos, msgs, { type: 'day-start', day: s.day + 1 });
+        convos = dayStartFx.conversations;
+        msgs = dayStartFx.messages;
 
         set({
           day: s.day + 1,
@@ -532,6 +819,10 @@ export const useGame = create<GameState>()(
               }))
             : [],
           detailUid: null,
+          conversations: convos,
+          messages: msgs,
+          dmTemplateHistoryIds: history,
+          openConversationId: null,
         });
       },
 
@@ -554,15 +845,100 @@ export const useGame = create<GameState>()(
           gameOver: null,
           stageUnlocked: null,
           detailUid: null,
+          conversations: [],
+          messages: {},
+          openConversationId: null,
+          dmTemplateHistoryIds: [],
+          readConversationIds: [],
+          stakeholders: STAKEHOLDERS_SEED,
         });
+      },
+
+      startGame: () => {
+        const s = get();
+        if (s.conversations.length > 0) return; // already started
+        const now = Date.now();
+        const { conversations, messages } = buildInitialChat(now);
+        // Seed 2 morning DMs.
+        let cs = conversations;
+        let ms = messages;
+        let history: string[] = [];
+        for (let i = 0; i < 2; i++) {
+          const tpl = pickDmTemplate('morning', history);
+          if (!tpl) break;
+          const r = instantiateDm(tpl, now + i, cs, ms);
+          cs = r.conversations;
+          ms = r.messages;
+          history = [...history, tpl.templateId];
+        }
+        set({ conversations: cs, messages: ms, dmTemplateHistoryIds: history });
       },
     }),
     {
       name: 'meeting-tycoon-save',
-      version: 5,
+      version: 8,
       migrate: () => undefined,
     },
   ),
 );
+
+// ──────────────────────────────────────────────────────────────────────────
+// Boss feedback — references current goal progress, not just raw delta
+// ──────────────────────────────────────────────────────────────────────────
+function pickBossFeedback(_delta: KpiDelta, _meetingsHeld: number): BossFeedback {
+  const s = useGame.getState();
+  const k = s.kpis;
+  const boss = s.stakeholders.find((x) => x.id === 'boss');
+  const goalValue = (g: typeof STAGE1_GOALS[number]): number => {
+    if (g.kpi) return k[g.kpi];
+    if (g.stakeholderId) return s.stakeholders.find((x) => x.id === g.stakeholderId)?.relationship ?? 0;
+    return 0;
+  };
+  const hitGoals = STAGE1_GOALS.filter((g) => {
+    const v = goalValue(g);
+    return g.lowerIsBetter ? v <= g.target : v >= g.target;
+  }).length;
+  // Boss-aware feedback before generic.
+  if (boss && boss.relationship <= 30) {
+    return {
+      emoji: '😬',
+      text: `${boss.name}'s patience is running out. ${boss.lastNote ?? 'They noticed.'}`,
+    };
+  }
+  if (boss && boss.relationship >= 80) {
+    return {
+      emoji: '🙌',
+      text: `${boss.name} is your biggest fan today. The "high performer" rumor is circulating.`,
+    };
+  }
+  if (hitGoals === STAGE1_GOALS.length) {
+    return {
+      emoji: '🙌',
+      text: 'All quarterly goals on track. The CFO sent a 🙏 emoji. That is rare.',
+    };
+  }
+  if (hitGoals >= 2) {
+    return {
+      emoji: '🙂',
+      text: `Solid progress — ${hitGoals}/4 quarterly goals hit. Keep doing whatever you are doing.`,
+    };
+  }
+  if (k.burnout >= 70) {
+    return {
+      emoji: '😬',
+      text: 'Team looks tired. Have you considered another all-hands?',
+    };
+  }
+  if (k.morale <= 30) {
+    return {
+      emoji: '😬',
+      text: "Morale is fragile. HR is preparing 'wellness resources'. That's not a good sign.",
+    };
+  }
+  return {
+    emoji: '🙂',
+    text: 'Promising. Let us circle back tomorrow on the circling-back cadence.',
+  };
+}
 
 export { STARTING_KPIS, applyDelta, STAGE1_LAST_DAY, DAILY_ACCEPT_CAP };

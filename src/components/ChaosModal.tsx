@@ -4,6 +4,7 @@ import { CHAOS_EVENTS } from '@/game/data';
 import { Avatar } from './Avatar';
 import { Icon, type IconName } from './Icon';
 import { KPI_META } from './KpiBadge';
+import { characterDisplayName } from '@/game/characters';
 import type { KpiDelta, KpiKey } from '@/game/types';
 
 /** Map chaos id → header icon, so we don't reach for the emoji bag. */
@@ -57,7 +58,7 @@ export function ChaosModal() {
             <div className="px-4 py-3.5">
               {/* Meeting metadata block (Outlook-style) */}
               <div className="rounded-md border border-ink-100 bg-ink-50/50 px-3 py-2.5 space-y-1.5">
-                <Row icon="person" label="From" value={ev.fromWho} valueAvatar />
+                <Row icon="person" label="From" value={characterDisplayName(ev.fromWho)} valueAvatar />
                 <Row icon="clock" label="Duration" value={`${ev.durationMin} minutes`} />
                 <Row icon="people" label="Attendees" value={ev.attendees} />
                 <Row icon="flag" label="Priority" value="Suddenly critical" />

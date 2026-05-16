@@ -5,6 +5,7 @@ import { Icon, type IconName } from './Icon';
 import { Avatar } from './Avatar';
 import { Chip, type ChipTone } from './Chip';
 import { KPI_META } from './KpiBadge';
+import { characterDisplayName } from '@/game/characters';
 import type { KpiKey, MeetingPriority } from '@/game/types';
 
 function fmtTime(min: number) {
@@ -88,8 +89,8 @@ export function MeetingDetailSheet() {
                 {meeting.from && (
                   <Row icon="person" label="From">
                     <span className="inline-flex items-center gap-1.5">
-                      <Avatar name={meeting.from} size={18} />
-                      <span>{meeting.from}</span>
+                      <Avatar name={characterDisplayName(meeting.from)} size={20} />
+                      <span>{characterDisplayName(meeting.from)}</span>
                     </span>
                   </Row>
                 )}

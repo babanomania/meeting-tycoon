@@ -64,10 +64,10 @@ export type FlowScreen =
   | 'onboarding'
   | 'calendar'
   | 'inbox'
+  | 'chat'
   | 'day-summary'
   | 'metrics'
-  | 'activity'
-  | 'more'
+  | 'people'
   | 'game-over'
   | 'stage-unlock';
 
@@ -89,13 +89,73 @@ export interface ChaosEvent {
 
 export type ChaosResponse = 'attend' | 'delegate' | 'reschedule';
 
+/**
+ * Conversation = a thread (Teams-style). Three kinds:
+ *  - 'group'   — channels like #engineering, read-only by player
+ *  - 'dm'      — 1:1 with another character, supports player replies
+ *  - 'meeting' — auto-created per meeting type, accumulates pre/post-meeting chatter
+ */
+export type ConversationKind = 'group' | 'dm' | 'meeting';
+
+export interface Conversation {
+  id: string;
+  kind: ConversationKind;
+  /** "#engineering" / "CEO" / "Daily Standup" */
+  name: string;
+  /** Subtitle under the title: role, member count, cadence */
+  subtitle?: string;
+  /** Names used to color avatars + show participant strip */
+  participants: string[];
+  /** Pinned channels surface at the top of the list. */
+  pinned?: boolean;
+  /** Renders this convo with a system/bot avatar (alert glyph instead of initials). */
+  isSystem?: boolean;
+  /** When set, the DM is awaiting a player reply with these options. */
+  pendingReplyOptions?: ChatReply[];
+  /** Latest arrival; drives sort order. */
+  lastMessageAt: number;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  /** Who sent it. 'you' = player; matches Conversation.participants otherwise. */
+  sender: string;
+  ts: number;
+  body: string;
+  /** Player's outgoing message. */
+  outgoing?: boolean;
+  /** Optional emoji reactions stacked under the bubble. */
+  reactions?: string[];
+}
+
+export interface ChatReply {
+  text: string;
+  delta: KpiDelta;
+  /** Optional one-liner that lands in the activity log if the player picks this. */
+  log?: string;
+}
+
+/**
+ * Events that ripple through chat. Group channels react to these
+ * with auto-generated messages; meeting chats accumulate post-meeting follow-ups.
+ */
+export type ChatEvent =
+  | { type: 'meeting-accepted'; meetingTypeId: MeetingTypeId }
+  | { type: 'meeting-declined'; meetingTypeId: MeetingTypeId }
+  | { type: 'meeting-held'; meetingTypeId: MeetingTypeId }
+  | { type: 'chaos-resolved'; chaosId: string; response: 'attend' | 'delegate' | 'reschedule' }
+  | { type: 'day-end'; kpis: Kpis }
+  | { type: 'day-start'; day: number };
+
 export type ActivityKind =
   | 'meeting-scheduled'
   | 'meeting-removed'
   | 'meeting-declined'
   | 'chaos-attended'
   | 'chaos-delegated'
-  | 'chaos-rescheduled';
+  | 'chaos-rescheduled'
+  | 'ping-replied';
 
 export interface ActivityEntry {
   id: string;
@@ -111,13 +171,43 @@ export interface QuarterlyGoal {
   id: string;
   label: string;
   emoji: string;
-  /** Which KPI this goal tracks */
-  kpi: KpiKey;
-  /** Target value to hit. If kpi is 'burnout', "achieved" means staying *below* target. */
+  /** Either a KPI key OR a stakeholder id — exactly one is set. */
+  kpi?: KpiKey;
+  stakeholderId?: StakeholderId;
+  /** Target value to hit. */
   target: number;
-  /** If true, a lower KPI value is better (i.e. burnout). */
+  /** If true, a lower value is better (i.e. burnout). */
   lowerIsBetter?: boolean;
 }
+
+/**
+ * Politics layer — each key stakeholder has a relationship score 0-100
+ * that shifts based on the player's actions toward them. The whole game
+ * could be summed up as "keep these people happy, especially the boss."
+ */
+export type StakeholderId =
+  | 'boss'
+  | 'ceo'
+  | 'cfo'
+  | 'cto'
+  | 'chro'
+  | 'vp_strategy';
+
+export interface Stakeholder {
+  id: StakeholderId;
+  /** Display name in the map ("CEO", "Your Boss") */
+  name: string;
+  /** Role / title shown under the name */
+  role: string;
+  /** Relationship score 0-100. 50 = neutral. */
+  relationship: number;
+  /** Last reason this score moved — drives the "why" line on the people screen. */
+  lastNote?: string;
+  /** Direction of last change, drives the small trend indicator. */
+  trend?: 'up' | 'down' | 'stable';
+}
+
+export type Sentiment = 'hostile' | 'cool' | 'neutral' | 'friendly' | 'champion';
 
 export type GameOverReason =
   | 'team-walkout'
