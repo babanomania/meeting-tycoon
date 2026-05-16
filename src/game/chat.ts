@@ -352,6 +352,56 @@ export const EVENT_REACTIONS: Array<{
     ],
   },
 
+  // ── On day end — positive recovery reactions (Stage 0 recovery loop) ──
+  // These fire when the player has shown restraint — light calendar,
+  // high productivity, recovered burnout, or simply skipped meetings.
+  // Provide the player with audible reward for *not* booking.
+  {
+    match: (e) =>
+      e.type === 'day-end' && e.kpis.productivity >= 70 && e.meetingsHeld <= 3,
+    reactions: [
+      {
+        conversationId: 'group-engineering',
+        sender: 'Dev S.',
+        body: () => 'actually shipped something today 🚀',
+        reactions: ['🚀', '🙌'],
+      },
+    ],
+  },
+  {
+    match: (e) => e.type === 'day-end' && e.kpis.burnout <= 20,
+    reactions: [
+      {
+        conversationId: 'group-culture',
+        sender: 'People Bot',
+        body: () => 'the team looks well-rested. Suspicious. Logging it as anomaly.',
+        reactions: ['👀'],
+      },
+    ],
+  },
+  {
+    match: (e) => e.type === 'day-end' && e.kpis.morale >= 75,
+    reactions: [
+      {
+        conversationId: 'group-general',
+        sender: 'Pat L.',
+        body: () => 'good vibes today. nobody cried in standup. small wins.',
+        reactions: ['🙌', '✨'],
+      },
+    ],
+  },
+  {
+    match: (e) => e.type === 'day-end' && e.meetingsHeld <= 2,
+    reactions: [
+      {
+        conversationId: 'group-engineering',
+        sender: 'Marcus W.',
+        body: () => 'manager skipped most of the meetings and we got *work* done. wild concept.',
+        reactions: ['🔥', '👏'],
+      },
+    ],
+  },
+
   // ── On day start — morning chatter ─────────────────────────────────────
   {
     match: (e) => e.type === 'day-start',

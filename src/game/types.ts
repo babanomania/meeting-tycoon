@@ -169,7 +169,7 @@ export type ChatEvent =
   | { type: 'meeting-declined'; meetingTypeId: MeetingTypeId }
   | { type: 'meeting-held'; meetingTypeId: MeetingTypeId }
   | { type: 'chaos-resolved'; chaosId: string; response: 'attend' | 'delegate' | 'reschedule' }
-  | { type: 'day-end'; kpis: Kpis }
+  | { type: 'day-end'; kpis: Kpis; meetingsHeld: number; unusedSlots: number }
   | { type: 'day-start'; day: number };
 
 export type ActivityKind =
@@ -256,6 +256,15 @@ export interface DayResult {
   decisionsMade: number;
   timeInMeetingsHrs: number;
   actualWorkHrs: number;
+  /** Net KPI change for the day (meetings + chaos + rest recovery). */
   kpiDelta: KpiDelta;
+  /**
+   * The passive recovery slice of kpiDelta — earned by NOT booking meetings.
+   * Surfaced separately on Day Summary so the player sees the reward
+   * for restraint. Positive productivity/morale, negative burnout.
+   */
+  restDelta: KpiDelta;
+  /** How many accept slots the player left unused (drives restDelta). */
+  unusedSlots: number;
   boss: BossFeedback;
 }

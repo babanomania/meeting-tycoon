@@ -794,13 +794,31 @@ export const useGame = create<GameState>()(
           return acc;
         }, {});
 
-        const totalDelta = sumDeltas(meetingsDelta, s.chaosDelta);
+        // ── Stage 0 recovery loop ──
+        // Per unused accept slot the player earns a small bonus: the team gets
+        // actual work done when the calendar is light. Recurring carry-overs
+        // and chaos meetings DON'T count as "accepts" — only the active accepts
+        // the player explicitly made today.
+        const acceptsToday = countAcceptsToday(s.acceptedRequestIds);
+        const unusedSlots = Math.max(0, DAILY_ACCEPT_CAP - acceptsToday);
+        const restDelta: KpiDelta = unusedSlots > 0
+          ? {
+              productivity: unusedSlots * 2,
+              burnout: unusedSlots * -2,
+              morale: unusedSlots * 1,
+            }
+          : {};
+
+        const totalDelta = sumDeltas(sumDeltas(meetingsDelta, s.chaosDelta), restDelta);
 
         const timeInMeetingsMin = sched.reduce((a, m) => a + MEETING_TYPES[m.typeId].durationMin, 0);
         const peopleMet = sched.reduce((a, m) => a + MEETING_TYPES[m.typeId].attendees, 0);
         const decisionsMade = Math.max(0, Math.round(sched.length * 0.15));
 
-        const feedback = pickBossFeedback(totalDelta, sched.length);
+        const nextKpis = applyDelta(s.kpis, totalDelta);
+        // Boss feedback now sees the post-recovery KPIs so it can praise
+        // light-day restraint.
+        const feedback = pickBossFeedback(totalDelta, sched.length, unusedSlots, nextKpis);
 
         const result: DayResult = {
           meetingsHeld: sched.length,
@@ -809,10 +827,11 @@ export const useGame = create<GameState>()(
           timeInMeetingsHrs: Math.round((timeInMeetingsMin / 60) * 10) / 10,
           actualWorkHrs: Math.max(0, Math.round(((540 - timeInMeetingsMin) / 60) * 10) / 10),
           kpiDelta: totalDelta,
+          restDelta,
+          unusedSlots,
           boss: feedback,
         };
 
-        const nextKpis = applyDelta(s.kpis, totalDelta);
         const over = checkGameOver(nextKpis);
 
         // Fire post-meeting messages in each meeting chat.
@@ -822,11 +841,12 @@ export const useGame = create<GameState>()(
           s.messages,
           Date.now(),
         );
-        // Fire end-of-day sentiment reactions in group channels.
+        // Fire end-of-day sentiment reactions in group channels. Now passes
+        // meetings + unusedSlots so reactions can fire for light/recovered days.
         const { conversations: convos2, messages: msgs2 } = applyChatEvent(
           convos1,
           msgs1,
-          { type: 'day-end', kpis: nextKpis },
+          { type: 'day-end', kpis: nextKpis, meetingsHeld: sched.length, unusedSlots },
         );
 
         set({
@@ -962,11 +982,19 @@ export const useGame = create<GameState>()(
 );
 
 // ──────────────────────────────────────────────────────────────────────────
-// Boss feedback — references current goal progress, not just raw delta
+// Boss feedback — references current goal progress, light-day restraint, and
+// stakeholder happiness rather than raw delta.
 // ──────────────────────────────────────────────────────────────────────────
-function pickBossFeedback(_delta: KpiDelta, _meetingsHeld: number): BossFeedback {
+function pickBossFeedback(
+  _delta: KpiDelta,
+  meetingsHeld: number,
+  unusedSlots: number,
+  postKpis: Kpis,
+): BossFeedback {
   const s = useGame.getState();
-  const k = s.kpis;
+  // Note: we use postKpis (after applying deltas) rather than the persisted
+  // s.kpis because the boss reacts to the NEW state, not yesterday's.
+  const k = postKpis;
   const boss = s.stakeholders.find((x) => x.id === 'boss');
   const goalValue = (g: typeof STAGE1_GOALS[number]): number => {
     if (g.kpi) return k[g.kpi];
@@ -977,17 +1005,39 @@ function pickBossFeedback(_delta: KpiDelta, _meetingsHeld: number): BossFeedback
     const v = goalValue(g);
     return g.lowerIsBetter ? v <= g.target : v >= g.target;
   }).length;
-  // Boss-aware feedback before generic.
+
+  // ── Critical first: boss-aware emergencies override everything else.
   if (boss && boss.relationship <= 30) {
     return {
       emoji: '😬',
-      text: `${boss.name}'s patience is running out. ${boss.lastNote ?? 'They noticed.'}`,
+      text: `${characterDisplayName(boss.name)}'s patience is running out. ${boss.lastNote ?? 'They noticed.'}`,
+    };
+  }
+
+  // ── Positive: light-day praise. The Stage 0 recovery loop pays off here —
+  // the boss notices when you've kept the calendar reasonable.
+  if (meetingsHeld === 0) {
+    return {
+      emoji: '🤨',
+      text: 'No meetings at all today? Bold. Suspicious. Working from a beach?',
+    };
+  }
+  if (unusedSlots >= 3 && k.productivity >= 55) {
+    return {
+      emoji: '🙂',
+      text: 'Light calendar, real output. The team actually shipped something. Keep this up.',
+    };
+  }
+  if (unusedSlots >= 2 && k.burnout <= 30) {
+    return {
+      emoji: '🙂',
+      text: "Whatever you're doing, the team isn't visibly burning out. I'll take it.",
     };
   }
   if (boss && boss.relationship >= 80) {
     return {
       emoji: '🙌',
-      text: `${boss.name} is your biggest fan today. The "high performer" rumor is circulating.`,
+      text: `${characterDisplayName(boss.name)} is your biggest fan today. The "high performer" rumor is circulating.`,
     };
   }
   if (hitGoals === STAGE1_GOALS.length) {
@@ -996,12 +1046,14 @@ function pickBossFeedback(_delta: KpiDelta, _meetingsHeld: number): BossFeedback
       text: 'All quarterly goals on track. The CFO sent a 🙏 emoji. That is rare.',
     };
   }
-  if (hitGoals >= 2) {
+  if (hitGoals >= 3) {
     return {
       emoji: '🙂',
-      text: `Solid progress — ${hitGoals}/4 quarterly goals hit. Keep doing whatever you are doing.`,
+      text: `Solid progress — ${hitGoals}/${STAGE1_GOALS.length} quarterly goals hit. Keep doing whatever you are doing.`,
     };
   }
+
+  // ── Negative: overload warnings.
   if (k.burnout >= 70) {
     return {
       emoji: '😬',
@@ -1014,6 +1066,7 @@ function pickBossFeedback(_delta: KpiDelta, _meetingsHeld: number): BossFeedback
       text: "Morale is fragile. HR is preparing 'wellness resources'. That's not a good sign.",
     };
   }
+
   return {
     emoji: '🙂',
     text: 'Promising. Let us circle back tomorrow on the circling-back cadence.',

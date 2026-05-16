@@ -95,6 +95,55 @@ export function DaySummary() {
           </div>
         </motion.div>
 
+        {/* Rest & Recovery — shown only when the player left slots unused.
+            Visible reward for restraint, paired with the KPI Impact card. */}
+        {result.unusedSlots > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.04 }}
+            className="bg-emerald-50 border border-emerald-100 rounded-md p-4"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[10.5px] font-bold tracking-widest uppercase text-emerald-700">
+                Rest & Recovery
+              </div>
+              <span className="text-[11px] font-semibold text-emerald-700 tabular-nums">
+                {result.unusedSlots} slot{result.unusedSlots === 1 ? '' : 's'} unused
+              </span>
+            </div>
+            <div className="text-[12px] text-emerald-800/80 mb-2 leading-snug">
+              The team got actual work done. Recovery applied:
+            </div>
+            <div className="space-y-1">
+              {(Object.keys(KPI_META) as KpiKey[]).map((k) => {
+                const v = result.restDelta[k] ?? 0;
+                if (v === 0) return null;
+                const meta = KPI_META[k];
+                // For burnout, going down is good; recovery shows the negative
+                // delta as a positive event with the down arrow.
+                const isGood = meta.inverted ? v < 0 : v > 0;
+                return (
+                  <div key={k} className="flex items-center justify-between text-[12.5px]">
+                    <span className="flex items-center gap-2 text-emerald-800">
+                      <Icon name={meta.icon} size={14} />
+                      {meta.label}
+                    </span>
+                    <span
+                      className={`font-bold tabular-nums inline-flex items-center gap-0.5 ${
+                        isGood ? 'text-emerald-700' : 'text-rose-700'
+                      }`}
+                    >
+                      <Icon name={v > 0 ? 'arrow-up' : 'arrow-down'} size={13} />
+                      {Math.abs(v)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
         {/* KPI impact */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -110,6 +159,8 @@ export function DaySummary() {
               const delta = result.kpiDelta[k] ?? 0;
               if (delta === 0) return null;
               const meta = KPI_META[k];
+              // Burnout is inverted — going up is bad.
+              const isGood = meta.inverted ? delta < 0 : delta > 0;
               return (
                 <div key={k} className="flex items-center justify-between text-[13px]">
                   <span className="flex items-center gap-2 text-ink-700">
@@ -118,10 +169,10 @@ export function DaySummary() {
                   </span>
                   <span
                     className={`font-bold tabular-nums inline-flex items-center gap-0.5 ${
-                      delta >= 0 ? 'text-emerald-600' : 'text-rose-600'
+                      isGood ? 'text-emerald-600' : 'text-rose-600'
                     }`}
                   >
-                    <Icon name={delta >= 0 ? 'arrow-up' : 'arrow-down'} size={14} />
+                    <Icon name={delta > 0 ? 'arrow-up' : 'arrow-down'} size={14} />
                     {Math.abs(delta)}
                   </span>
                 </div>
