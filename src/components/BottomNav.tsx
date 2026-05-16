@@ -12,15 +12,15 @@ interface Props {
 interface Item { id: NavId; icon: IconName; label: string; }
 
 const LEFT: Item[] = [
-  { id: 'chat',     icon: 'chat',      label: 'Chat'     },
-  { id: 'calendar', icon: 'calendar',  label: 'Calendar' },
+  { id: 'chat',     icon: 'chat',     label: 'Chat'     },
+  { id: 'calendar', icon: 'calendar', label: 'Calendar' },
 ];
 const RIGHT: Item[] = [
-  { id: 'home',     icon: 'dashboard', label: 'Home'     },
-  { id: 'people',   icon: 'people',    label: 'People'   },
+  { id: 'inbox',  icon: 'inbox',  label: 'Inbox'  },
+  { id: 'people', icon: 'people', label: 'People' },
 ];
 
-export function BottomNav({ active = 'calendar', inboxCount = 0, chatUnread = 0, onNavigate }: Props) {
+export function BottomNav({ active = 'home', inboxCount = 0, chatUnread = 0, onNavigate }: Props) {
   return (
     <nav className="relative border-t border-ink-100 bg-white px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-end justify-around">
       {LEFT.map((it) => (
@@ -32,20 +32,26 @@ export function BottomNav({ active = 'calendar', inboxCount = 0, chatUnread = 0,
           badge={it.id === 'chat' ? chatUnread : 0}
         />
       ))}
+
+      {/* Center FAB — Home is the orchestration hub */}
       <button
-        onClick={() => onNavigate?.('inbox')}
-        aria-label="Inbox"
-        className={`-mt-7 w-14 h-14 rounded-full ${active === 'inbox' ? 'bg-brand-700' : 'bg-brand-600'} text-white shadow-el-2 active:scale-95 transition flex items-center justify-center relative`}
+        onClick={() => onNavigate?.('home')}
+        aria-label="Home"
+        className={`-mt-7 w-14 h-14 rounded-full ${
+          active === 'home' ? 'bg-brand-700 ring-4 ring-brand-100' : 'bg-brand-600'
+        } text-white shadow-el-2 active:scale-95 transition flex items-center justify-center`}
       >
-        <Icon name="inbox" size={22} />
-        {inboxCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-[10.5px] font-bold flex items-center justify-center ring-2 ring-white">
-            {inboxCount > 9 ? '9+' : inboxCount}
-          </span>
-        )}
+        <Icon name="home" size={22} />
       </button>
+
       {RIGHT.map((it) => (
-        <NavBtn key={it.id} item={it} active={active === it.id} onClick={() => onNavigate?.(it.id)} badge={0} />
+        <NavBtn
+          key={it.id}
+          item={it}
+          active={active === it.id}
+          onClick={() => onNavigate?.(it.id)}
+          badge={it.id === 'inbox' ? inboxCount : 0}
+        />
       ))}
     </nav>
   );

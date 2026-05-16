@@ -50,7 +50,8 @@ export type IconName =
   | 'star'
   | 'chat'
   | 'reply'
-  | 'history';
+  | 'history'
+  | 'home';
 
 interface Props extends Omit<SVGProps<SVGSVGElement>, 'name'> {
   name: IconName;
@@ -314,6 +315,14 @@ const PATHS: Record<IconName, JSX.Element> = {
       <path d="M3 12a9 9 0 109-9" />
       <path d="M3 4v5h5" />
       <path d="M12 8v5l3.5 2" />
+    </>
+  ),
+  home: (
+    <>
+      {/* House silhouette: roof + body + door */}
+      <path d="M3.5 11.5L12 4l8.5 7.5" />
+      <path d="M5 10.5V20h14V10.5" />
+      <path d="M10 20v-5.5h4V20" />
     </>
   ),
 };
