@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useGame } from '@/game/store';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
+import { MenuButton } from '@/components/SettingsDrawer';
 import { characterDisplayName } from '@/game/characters';
 import type { Conversation, ChatMessage } from '@/game/types';
 
@@ -36,8 +37,9 @@ export function ChatScreen() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-5 pt-5 pb-3 flex items-center justify-between border-b border-ink-100">
-        <div>
+      <div className="px-5 pt-5 pb-3 flex items-center gap-2 border-b border-ink-100">
+        <MenuButton />
+        <div className="flex-1 min-w-0">
           <div className="text-[10.5px] font-semibold uppercase tracking-widest text-ink-400">
             Day {day} · Today
           </div>

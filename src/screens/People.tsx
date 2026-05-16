@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useGame } from '@/game/store';
 import { Icon, type IconName } from '@/components/Icon';
 import { Avatar } from '@/components/Avatar';
 import { StakeholderMap } from '@/components/StakeholderMap';
+import { MenuButton } from '@/components/SettingsDrawer';
 import { SENTIMENT_META, politicalHeat, sentimentFor } from '@/game/politics';
 import { characterDisplayName, characterRole } from '@/game/characters';
-import type { Stakeholder, StakeholderId } from '@/game/types';
+import type { Stakeholder } from '@/game/types';
 
 /**
  * People — the politics screen.
@@ -19,7 +20,6 @@ export function People() {
   const stakeholders = useGame((s) => s.stakeholders);
   const day = useGame((s) => s.day);
   const stage = useGame((s) => s.stage);
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const boss = useMemo(
     () => stakeholders.find((s) => s.id === 'boss'),
@@ -33,20 +33,14 @@ export function People() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-5 pt-5 pb-3 flex items-center justify-between border-b border-ink-100">
-        <div>
+      <div className="px-5 pt-5 pb-3 flex items-center gap-2 border-b border-ink-100">
+        <MenuButton />
+        <div className="flex-1 min-w-0">
           <div className="text-[10.5px] font-semibold uppercase tracking-widest text-ink-400">
             Stage {stage} · Day {day}
           </div>
           <h1 className="text-[20px] font-bold text-ink-800 leading-tight mt-0.5">People</h1>
         </div>
-        <button
-          onClick={() => setSettingsOpen(true)}
-          className="w-8 h-8 rounded-sm hover:bg-ink-50 flex items-center justify-center text-ink-500"
-          aria-label="Settings"
-        >
-          <Icon name="menu" size={18} />
-        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto phone-scroll px-5 py-4 space-y-4">
@@ -91,10 +85,6 @@ export function People() {
         </div>
       </div>
 
-      {/* Settings drawer */}
-      <AnimatePresence>
-        {settingsOpen && <SettingsDrawer onClose={() => setSettingsOpen(false)} />}
-      </AnimatePresence>
     </div>
   );
 }
@@ -244,74 +234,3 @@ function TrendBadge({ trend }: { trend?: 'up' | 'down' | 'stable' }) {
   );
 }
 
-function SettingsDrawer({ onClose }: { onClose: () => void }) {
-  const resetGame = useGame((s) => s.resetGame);
-  const day = useGame((s) => s.day);
-  const stage = useGame((s) => s.stage);
-  const activity = useGame((s) => s.activityToday);
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      className="absolute inset-0 z-50 bg-ink-800/40 backdrop-blur-sm flex items-end justify-center"
-    >
-      <motion.div
-        initial={{ y: 40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 20, opacity: 0 }}
-        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full bg-white rounded-t-xl shadow-el-4 overflow-hidden"
-      >
-        <div className="flex justify-center pt-2 pb-1">
-          <div className="w-10 h-1 rounded-full bg-ink-200" />
-        </div>
-        <div className="px-4 pt-2 pb-1 flex items-center justify-between border-b border-ink-100">
-          <h2 className="font-semibold text-ink-800 text-[15px]">Settings</h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-sm hover:bg-ink-50 flex items-center justify-center text-ink-500">
-            <Icon name="x" size={18} />
-          </button>
-        </div>
-        <ul className="divide-y divide-ink-100">
-          <SettingsRow icon="briefcase" label="Stage" value={`Stage ${stage} · Day ${day}`} />
-          <SettingsRow icon="history" label="Activity today" value={`${activity.length} event${activity.length === 1 ? '' : 's'}`} />
-          <SettingsRow icon="sparkle" label="About" value="Meeting Tycoon v0.6" />
-          <li>
-            <button
-              onClick={() => {
-                resetGame();
-                onClose();
-              }}
-              className="w-full flex items-center gap-3 px-5 py-3 text-left text-rose-700 hover:bg-rose-50"
-            >
-              <div className="w-8 h-8 rounded-sm bg-rose-50 text-rose-600 flex items-center justify-center">
-                <Icon name="x" size={15} />
-              </div>
-              <span className="flex-1 text-[13.5px] font-semibold">Restart game</span>
-              <Icon name="chevron-right" size={15} className="text-ink-400" />
-            </button>
-          </li>
-        </ul>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-function SettingsRow({ icon, label, value }: { icon: IconName; label: string; value: string }) {
-  return (
-    <li className="flex items-center gap-3 px-5 py-3">
-      <div className="w-8 h-8 rounded-sm bg-ink-50 text-ink-600 flex items-center justify-center">
-        <Icon name={icon} size={15} />
-      </div>
-      <span className="flex-1 text-[13.5px] font-semibold text-ink-800">{label}</span>
-      <span className="text-[12px] text-ink-400 font-medium">{value}</span>
-    </li>
-  );
-}
-
-/** Tap-handler placeholder export — used later from Insights pulse to deep-link a stakeholder. */
-export function buildOpenPeopleHandler(_id: StakeholderId, navigate: () => void) {
-  return navigate;
-}

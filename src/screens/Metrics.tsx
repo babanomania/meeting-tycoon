@@ -6,6 +6,7 @@ import { KPI_META } from '@/components/KpiBadge';
 import { Sparkline } from '@/components/Sparkline';
 import { Icon } from '@/components/Icon';
 import { Avatar } from '@/components/Avatar';
+import { MenuButton } from '@/components/SettingsDrawer';
 import { isGoalAchieved, goalCurrentValue } from '@/components/GoalsCard';
 import { SENTIMENT_META, sentimentFor } from '@/game/politics';
 import { characterDisplayName } from '@/game/characters';
@@ -78,16 +79,14 @@ export function Metrics() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-5 pt-5 pb-3 flex items-center justify-between border-b border-ink-100">
-        <div>
+      <div className="px-5 pt-5 pb-3 flex items-center gap-2 border-b border-ink-100">
+        <MenuButton />
+        <div className="flex-1 min-w-0">
           <div className="text-[10.5px] font-semibold uppercase tracking-widest text-ink-400">
             Stage {stage} · Day {day}
           </div>
           <h1 className="text-[20px] font-bold text-ink-800 leading-tight mt-0.5">Insights</h1>
         </div>
-        <button className="w-8 h-8 rounded-sm hover:bg-ink-50 flex items-center justify-center text-ink-500">
-          <Icon name="settings" size={18} />
-        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto phone-scroll px-5 py-4 space-y-4">

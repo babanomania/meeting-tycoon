@@ -7,6 +7,7 @@ import type {
   ChatMessage,
   Conversation,
   DayResult,
+  FeedbackToast,
   FlowScreen,
   GameOver,
   Kpis,
@@ -20,6 +21,7 @@ import {
   adjustRelationship,
   senderToStakeholder,
 } from './politics';
+import { characterDisplayName } from './characters';
 import {
   CHAOS_EVENTS,
   MEETING_TYPES,
@@ -132,7 +134,16 @@ interface GameState {
   /** Politics — relationship scores per key stakeholder. */
   stakeholders: Stakeholder[];
 
+  /** Floating feedback toast — shown briefly after player actions. */
+  toast: FeedbackToast | null;
+  /** App-wide hamburger drawer state (opened from any screen header). */
+  settingsOpen: boolean;
+
   setScreen: (s: FlowScreen) => void;
+  pushToast: (t: Omit<FeedbackToast, 'id'>) => void;
+  dismissToast: () => void;
+  openSettings: () => void;
+  closeSettings: () => void;
   acceptRequest: (requestId: string) => void;
   declineRequest: (requestId: string) => void;
   removeScheduled: (uid: string) => void;
@@ -372,8 +383,20 @@ export const useGame = create<GameState>()(
       dmTemplateHistoryIds: [],
       readConversationIds: [],
       stakeholders: STAKEHOLDERS_SEED,
+      toast: null,
+      settingsOpen: false,
 
       setScreen: (s) => set({ screen: s }),
+      pushToast: (t) =>
+        set({
+          toast: {
+            ...t,
+            id: `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          },
+        }),
+      dismissToast: () => set({ toast: null }),
+      openSettings: () => set({ settingsOpen: true }),
+      closeSettings: () => set({ settingsOpen: false }),
 
       acceptRequest: (requestId) => {
         const requests = requestsForDay(get().day);
@@ -407,6 +430,9 @@ export const useGame = create<GameState>()(
         const nextStakeholders = stakeholderId
           ? adjustRelationship(get().stakeholders, stakeholderId, +5, `Accepted ${type.title}`)
           : get().stakeholders;
+        const stakeholderForToast = stakeholderId
+          ? nextStakeholders.find((x) => x.id === stakeholderId)
+          : undefined;
 
         set((s) => ({
           schedule: [
@@ -431,6 +457,14 @@ export const useGame = create<GameState>()(
           conversations: convos2,
           messages: msgs2,
           stakeholders: nextStakeholders,
+          toast: {
+            id: `toast-${Date.now()}-acc`,
+            title: `Scheduled · ${type.title}`,
+            kpiDelta: type.impact,
+            stakeholder: stakeholderForToast
+              ? { name: characterDisplayName(stakeholderForToast.name), delta: +5 }
+              : undefined,
+          },
         }));
 
         const afterCount = beforeCount + 1;
@@ -507,6 +541,9 @@ export const useGame = create<GameState>()(
         const nextStakeholders = stakeholderId
           ? adjustRelationship(get().stakeholders, stakeholderId, declineDelta, `Declined ${t.title}`)
           : get().stakeholders;
+        const stakeholderForToast = stakeholderId
+          ? nextStakeholders.find((x) => x.id === stakeholderId)
+          : undefined;
 
         set((s) => ({
           acceptedRequestIds: [...s.acceptedRequestIds, `decline:${requestId}`],
@@ -520,6 +557,14 @@ export const useGame = create<GameState>()(
           conversations: convos2,
           messages: msgs2,
           stakeholders: nextStakeholders,
+          toast: {
+            id: `toast-${Date.now()}-dec`,
+            title: `Declined · ${t.title}`,
+            kpiDelta: cost,
+            stakeholder: stakeholderForToast
+              ? { name: characterDisplayName(stakeholderForToast.name), delta: declineDelta }
+              : undefined,
+          },
         }));
 
         // High/crisis declines often trigger a DM follow-up.
@@ -629,6 +674,9 @@ export const useGame = create<GameState>()(
         const nextStakeholders = chaosStakeholderId
           ? adjustRelationship(s.stakeholders, chaosStakeholderId, chaosRelDelta, `${label} their chaos event`)
           : s.stakeholders;
+        const chaosStakeholderForToast = chaosStakeholderId
+          ? nextStakeholders.find((x) => x.id === chaosStakeholderId)
+          : undefined;
 
         set({
           activeChaos: null,
@@ -644,6 +692,14 @@ export const useGame = create<GameState>()(
           conversations: convos2,
           messages: msgs2,
           stakeholders: nextStakeholders,
+          toast: {
+            id: `toast-${Date.now()}-chaos`,
+            title: `${label} · ${ev.title}`,
+            kpiDelta: impact,
+            stakeholder: chaosStakeholderForToast
+              ? { name: characterDisplayName(chaosStakeholderForToast.name), delta: chaosRelDelta }
+              : undefined,
+          },
         });
 
         // After a chaos resolves, fire a follow-up DM.
@@ -690,6 +746,9 @@ export const useGame = create<GameState>()(
         const nextStakeholders = stakeholderId
           ? adjustRelationship(s.stakeholders, stakeholderId, replyDelta, `Replied "${reply.text.slice(0, 32)}"`)
           : s.stakeholders;
+        const stakeholderForToast = stakeholderId
+          ? nextStakeholders.find((x) => x.id === stakeholderId)
+          : undefined;
 
         set({
           conversations: s.conversations.map((c) =>
@@ -704,6 +763,14 @@ export const useGame = create<GameState>()(
             from: convo.name,
           }),
           stakeholders: nextStakeholders,
+          toast: {
+            id: `toast-${Date.now()}-reply`,
+            title: `Replied to ${characterDisplayName(convo.name)}`,
+            kpiDelta: reply.delta,
+            stakeholder: stakeholderForToast && replyDelta !== 0
+              ? { name: characterDisplayName(stakeholderForToast.name), delta: replyDelta }
+              : undefined,
+          },
         });
       },
 
@@ -823,6 +890,8 @@ export const useGame = create<GameState>()(
           messages: msgs,
           dmTemplateHistoryIds: history,
           openConversationId: null,
+          toast: null,
+          settingsOpen: false,
         });
       },
 
@@ -851,6 +920,8 @@ export const useGame = create<GameState>()(
           dmTemplateHistoryIds: [],
           readConversationIds: [],
           stakeholders: STAKEHOLDERS_SEED,
+          toast: null,
+          settingsOpen: false,
         });
       },
 
@@ -876,7 +947,7 @@ export const useGame = create<GameState>()(
     }),
     {
       name: 'meeting-tycoon-save',
-      version: 8,
+      version: 9,
       migrate: () => undefined,
     },
   ),

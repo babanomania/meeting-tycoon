@@ -20,9 +20,13 @@ interface Props {
  *   `<image>` clipped to a circle; otherwise we fall back to initials.
  */
 export function StakeholderMap({ stakeholders, bossId = 'boss', onNodeTap }: Props) {
-  const SIZE = 280;
+  // viewBox is sized to fit:
+  //   - the boss BOSS pill above the top node (cy − r − 10), and
+  //   - the sentiment label under the bottom node (cy + r + 26).
+  // SIZE/RADIUS chosen so neither overflows.
+  const SIZE = 320;
   const CENTER = SIZE / 2;
-  const RADIUS = 96;
+  const RADIUS = 92;
 
   const ordered = useMemo(() => {
     const boss = stakeholders.find((s) => s.id === bossId);
@@ -41,7 +45,7 @@ export function StakeholderMap({ stakeholders, bossId = 'boss', onNodeTap }: Pro
   }, [ordered, bossId]);
 
   return (
-    <div className="relative w-full" style={{ aspectRatio: '1 / 1', maxWidth: 360 }}>
+    <div className="relative w-full" style={{ aspectRatio: '1 / 1', maxWidth: 380 }}>
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full h-full">
         <defs>
           {/* One circular clipPath per node so the photo crops to the circle. */}

@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useGame, DAILY_ACCEPT_CAP, pendingRequestsFor } from '@/game/store';
 import { MEETING_TYPES, STAGE1_GOALS } from '@/game/data';
 import { Icon } from '@/components/Icon';
+import { MenuButton } from '@/components/SettingsDrawer';
 import { isGoalAchieved, goalCurrentValue } from '@/components/GoalsCard';
 import type { MeetingPriority, Kpis, Stakeholder } from '@/game/types';
 
@@ -71,8 +72,9 @@ export function CalendarScreen() {
   return (
     <div className="flex flex-col h-full">
       {/* App bar */}
-      <div className="px-5 pt-5 pb-3 flex items-center justify-between border-b border-ink-100">
-        <div className="min-w-0">
+      <div className="px-5 pt-5 pb-3 flex items-center gap-2 border-b border-ink-100">
+        <MenuButton />
+        <div className="min-w-0 flex-1">
           <div className="text-[10.5px] font-semibold uppercase tracking-widest text-ink-400">
             Stage 1 · Day {day}
           </div>

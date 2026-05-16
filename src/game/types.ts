@@ -137,6 +137,21 @@ export interface ChatReply {
 }
 
 /**
+ * Brief toast that floats over the screen for ~2.5s after the player takes an
+ * action that changes their state. Gives the missing reward signal — "yes,
+ * something happened, here's what."
+ */
+export interface FeedbackToast {
+  id: string;
+  /** KPI deltas that just applied (productivity +5, morale -3 etc). */
+  kpiDelta?: KpiDelta;
+  /** Optional stakeholder relationship change ({name: 'David Chen', delta: +5}). */
+  stakeholder?: { name: string; delta: number };
+  /** A short headline shown bold at the top of the toast. */
+  title?: string;
+}
+
+/**
  * Events that ripple through chat. Group channels react to these
  * with auto-generated messages; meeting chats accumulate post-meeting follow-ups.
  */

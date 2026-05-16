@@ -5,6 +5,8 @@ import { PhoneFrame } from './components/PhoneFrame';
 import { BottomNav, type NavId } from './components/BottomNav';
 import { ChaosModal } from './components/ChaosModal';
 import { MeetingDetailSheet } from './components/MeetingDetailSheet';
+import { KpiToast } from './components/KpiToast';
+import { SettingsDrawer } from './components/SettingsDrawer';
 import { Onboarding } from './screens/Onboarding';
 import { CalendarScreen } from './screens/Calendar';
 import { InboxScreen } from './screens/Inbox';
@@ -123,6 +125,10 @@ export function App() {
       {/* Modals */}
       {screen === 'inbox' && <ChaosModal />}
       {(screen === 'calendar' || screen === 'inbox') && <MeetingDetailSheet />}
+
+      {/* Global feedback layers — visible from any screen */}
+      <KpiToast />
+      <SettingsDrawer />
     </PhoneFrame>
   );
 }
