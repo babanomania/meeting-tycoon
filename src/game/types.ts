@@ -66,7 +66,7 @@ export type FlowScreen =
   | 'inbox'
   | 'chat'
   | 'day-summary'
-  | 'metrics'
+  | 'home'
   | 'people'
   | 'game-over'
   | 'stage-unlock';

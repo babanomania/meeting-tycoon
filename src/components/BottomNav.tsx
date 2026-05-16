@@ -1,6 +1,6 @@
 import { Icon, type IconName } from './Icon';
 
-export type NavId = 'chat' | 'calendar' | 'inbox' | 'metrics' | 'people';
+export type NavId = 'chat' | 'calendar' | 'inbox' | 'home' | 'people';
 
 interface Props {
   active?: NavId;
@@ -16,7 +16,7 @@ const LEFT: Item[] = [
   { id: 'calendar', icon: 'calendar',  label: 'Calendar' },
 ];
 const RIGHT: Item[] = [
-  { id: 'metrics',  icon: 'dashboard', label: 'Insights' },
+  { id: 'home',     icon: 'dashboard', label: 'Home'     },
   { id: 'people',   icon: 'people',    label: 'People'   },
 ];
 

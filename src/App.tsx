@@ -13,7 +13,7 @@ import { InboxScreen } from './screens/Inbox';
 import { ChatScreen } from './screens/Chat';
 import { ChatThread } from './screens/ChatThread';
 import { DaySummary } from './screens/DaySummary';
-import { Metrics } from './screens/Metrics';
+import { Home } from './screens/Home';
 import { People } from './screens/People';
 import { GameOver } from './screens/GameOver';
 import { StageUnlock } from './screens/StageUnlock';
@@ -26,7 +26,7 @@ const ANIM = {
   transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const },
 };
 
-const NAV_SCREENS = new Set<string>(['calendar', 'inbox', 'chat', 'metrics', 'people']);
+const NAV_SCREENS = new Set<string>(['calendar', 'inbox', 'chat', 'home', 'people']);
 
 export function App() {
   const screen = useGame((s) => s.screen);
@@ -65,7 +65,7 @@ export function App() {
     screen === 'chat'      ? 'chat'      :
     screen === 'calendar'  ? 'calendar'  :
     screen === 'inbox'     ? 'inbox'     :
-    screen === 'metrics'   ? 'metrics'   :
+    screen === 'home'      ? 'home'      :
     screen === 'people'    ? 'people'    :
     undefined;
 
@@ -76,7 +76,7 @@ export function App() {
       case 'inbox':        return <InboxScreen key="inbox" />;
       case 'chat':         return <ChatScreen key="chat" />;
       case 'day-summary':  return <DaySummary key="day-summary" />;
-      case 'metrics':      return <Metrics key="metrics" />;
+      case 'home':         return <Home key="home" />;
       case 'people':       return <People key="people" />;
       case 'game-over':    return <GameOver key="game-over" />;
       case 'stage-unlock': return <StageUnlock key="stage-unlock" />;
@@ -95,7 +95,7 @@ export function App() {
             active={navActive}
             inboxCount={inboxCount}
             chatUnread={chatUnread}
-            onNavigate={(id) => setScreen(id as 'calendar' | 'inbox' | 'chat' | 'metrics' | 'people')}
+            onNavigate={(id) => setScreen(id as 'calendar' | 'inbox' | 'chat' | 'home' | 'people')}
           />
         ) : null
       }

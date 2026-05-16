@@ -55,7 +55,7 @@ export function SettingsDrawer() {
               <NavRow icon="chat"      label="Chat"     onClick={() => { setScreen('chat'); close(); }} />
               <NavRow icon="calendar"  label="Calendar" onClick={() => { setScreen('calendar'); close(); }} />
               <NavRow icon="inbox"     label="Inbox"    onClick={() => { setScreen('inbox'); close(); }} />
-              <NavRow icon="dashboard" label="Insights" onClick={() => { setScreen('metrics'); close(); }} />
+              <NavRow icon="dashboard" label="Home"     onClick={() => { setScreen('home');    close(); }} />
               <NavRow icon="people"    label="People"   onClick={() => { setScreen('people'); close(); }} />
 
               <SectionLabel>Today</SectionLabel>

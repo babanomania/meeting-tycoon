@@ -1,4 +1,4 @@
-import type { KpiKey } from '@/game/types';
+import type { KpiKey, StakeholderId } from '@/game/types';
 import { Icon, type IconName } from './Icon';
 
 interface Meta {
@@ -9,15 +9,44 @@ interface Meta {
   color: string;
   /** Hex for charts / mini bars */
   hex: string;
+  /**
+   * The stakeholder whose relationship sponsors this KPI. When their
+   * relationship is high, this KPI tends to grow with the player; when
+   * it's low, this KPI suffers. Used by the Home dashboard to show
+   * the cause-effect link between People and KPIs.
+   */
+  sponsor: StakeholderId;
+  /** One-line description of why this stakeholder owns this KPI. */
+  sponsorReason: string;
+  /** True when LOW values are good (only burnout). Used for color logic. */
+  inverted?: boolean;
 }
 
 export const KPI_META: Record<KpiKey, Meta> = {
-  productivity:        { label: 'Productivity',     short: 'Prod.',  icon: 'trending-up', color: 'text-emerald-600', hex: '#10B981' },
-  morale:              { label: 'Morale',           short: 'Morale', icon: 'smile',       color: 'text-amber-600',   hex: '#F59E0B' },
-  burnout:             { label: 'Burnout',          short: 'Burn.',  icon: 'fire',        color: 'text-rose-600',    hex: '#EF4444' },
-  alignment:           { label: 'Alignment',        short: 'Align.', icon: 'compass',     color: 'text-sky-600',     hex: '#0EA5E9' },
-  executiveConfidence: { label: 'Exec Confidence',  short: 'Exec.',  icon: 'briefcase',   color: 'text-brand-700',   hex: '#6C5CE7' },
-  visibility:          { label: 'Visibility',       short: 'Vis.',   icon: 'eye',         color: 'text-violet-600',  hex: '#8B5CF6' },
+  productivity: {
+    label: 'Productivity', short: 'Prod.', icon: 'trending-up', color: 'text-emerald-600', hex: '#10B981',
+    sponsor: 'cto',  sponsorReason: 'CTO owns delivery',
+  },
+  morale: {
+    label: 'Morale',       short: 'Morale', icon: 'smile',       color: 'text-amber-600', hex: '#F59E0B',
+    sponsor: 'chro', sponsorReason: 'CHRO owns wellbeing',
+  },
+  burnout: {
+    label: 'Burnout',      short: 'Burn.',  icon: 'fire',        color: 'text-rose-600',  hex: '#EF4444',
+    sponsor: 'cfo',  sponsorReason: 'CFO sees the cost-of-turnover', inverted: true,
+  },
+  alignment: {
+    label: 'Alignment',    short: 'Align.', icon: 'compass',     color: 'text-sky-600',   hex: '#0EA5E9',
+    sponsor: 'boss', sponsorReason: 'Your boss measures alignment',
+  },
+  executiveConfidence: {
+    label: 'Exec Confidence', short: 'Exec.', icon: 'briefcase', color: 'text-brand-700', hex: '#6C5CE7',
+    sponsor: 'ceo',  sponsorReason: 'CEO\'s confidence in you',
+  },
+  visibility: {
+    label: 'Visibility',   short: 'Vis.',   icon: 'eye',         color: 'text-violet-600', hex: '#8B5CF6',
+    sponsor: 'vp_strategy', sponsorReason: 'Strategy controls leadership exposure',
+  },
 };
 
 /**

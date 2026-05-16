@@ -97,7 +97,7 @@ export function CalendarScreen() {
       </div>
 
       {/* Goals pill row — always visible reminder of what you're chasing this week */}
-      <GoalsPillRow kpis={kpis} stakeholders={stakeholders} onTap={() => setScreen('metrics')} />
+      <GoalsPillRow kpis={kpis} stakeholders={stakeholders} onTap={() => setScreen('home')} />
 
       {/* Capacity row */}
       <div className="px-5 py-2.5 bg-ink-50/60 border-b border-ink-100 flex items-center justify-between text-[11.5px]">
