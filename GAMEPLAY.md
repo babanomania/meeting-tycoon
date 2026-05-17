@@ -29,9 +29,10 @@ every number means.
 10. [Stage 3 — Bureaucracy](#stage-3--bureaucracy)
 11. [Stage 4 — Corporate Madness](#stage-4--corporate-madness)
 12. [Stage 5 — Executive Absurdity](#stage-5--executive-absurdity)
-13. [Eight endings](#eight-endings)
-14. [Chat](#chat)
-15. [Save data](#save-data)
+13. [Chaos events](#chaos-events)
+14. [Eight endings](#eight-endings)
+15. [Chat](#chat)
+16. [Save data](#save-data)
 
 ---
 
@@ -60,34 +61,34 @@ You're now "Meeting Manager," World's Okayest Manager. 23 employees. 127
 meetings already on your calendar. **You can't actually decline.**
 
 <p align="center">
-  <img src="docs/assets/screenshots/02-onboarding-mobile.png" alt="Onboarding screen with David Chen's letter" width="380">
+  <img src="docs/assets/screenshots/02-onboarding.png" alt="Onboarding screen with David Chen's letter" width="380">
 </p>
 
 ---
 
 ## A typical day — the four core screens
 
-The game loop loops through four primary screens, accessible from a
-bottom nav that mimics Teams / Outlook on mobile.
+The game loop loops through four primary screens, accessible from a bottom
+nav that mimics Teams / Outlook on mobile.
 
 <table>
 <tr>
 <td width="50%" align="center">
-  <img src="docs/assets/screenshots/10-stage1-calendar.png" alt="Stage 1 Calendar screen" width="320"><br>
+  <img src="docs/assets/screenshots/03-calendar.png" alt="Calendar agenda for Tuesday Day 2" width="320"><br>
   <sub><b>Calendar</b> — your agenda for today. Hours 9 AM – 6 PM, color-coded by priority. Recurring meetings carry over. The capacity strip shows "3/5 accepts left" and "7h focus." Goals pill at the top tracks 1/5 quarterly goals hit.</sub>
 </td>
 <td width="50%" align="center">
-  <img src="docs/assets/screenshots/11-stage1-inbox.png" alt="Inbox screen with KPI projections" width="320"><br>
+  <img src="docs/assets/screenshots/04-inbox.png" alt="Inbox with five pending requests showing KPI projections" width="320"><br>
   <sub><b>Inbox</b> — pending meeting requests. Each card shows sender, duration, attendees, priority pill, the KPI delta, and how each goal moves if you accept. You can accept 3 more meetings today. Choose wisely.</sub>
 </td>
 </tr>
 <tr>
 <td width="50%" align="center">
-  <img src="docs/assets/screenshots/12-stage1-home.png" alt="Home screen with goals and KPI matrix" width="320"><br>
+  <img src="docs/assets/screenshots/05-home.png" alt="Home screen — Acme Corp hero, quarterly goals, KPI x sponsor matrix" width="320"><br>
   <sub><b>Home</b> — company hero ("Wednesday · Day 3 of 5 · Another day at the office"), the 5 quarterly goals (1/5 hit), and the KPI×Sponsor matrix that pairs each metric with its owning stakeholder. Productivity → Raj. Morale → Maya. Burnout → Diana.</sub>
 </td>
 <td width="50%" align="center">
-  <img src="docs/assets/screenshots/13-stage1-people.png" alt="People screen with stakeholder hub-and-spoke map" width="320"><br>
+  <img src="docs/assets/screenshots/06-people.png" alt="People — Boss happiness card and stakeholder hub-and-spoke map" width="320"><br>
   <sub><b>People</b> — Boss happiness front and center (David Chen, 62). The hub-and-spoke map below shows all six executives with relationship scores and sentiment labels (FRIENDLY / NEUTRAL / HOSTILE). Political Heat strip below.</sub>
 </td>
 </tr>
@@ -96,7 +97,7 @@ bottom nav that mimics Teams / Outlook on mobile.
 End of day → **Day Summary** screen:
 
 <p align="center">
-  <img src="docs/assets/screenshots/14-stage1-day-summary.png" alt="Day Summary with daily breakdown, Rest & Recovery card, KPI Impact, and David's feedback line" width="380">
+  <img src="docs/assets/screenshots/07-day-summary.png" alt="Day Summary with daily breakdown, Rest & Recovery card, KPI Impact, and David's feedback line" width="380">
 </p>
 
 Meetings held, time in meetings, decisions made — then the **Rest &
@@ -187,22 +188,26 @@ mechanics, not bigger numbers.
 The most-felt change is the **Stage 2 cap drop from 5 → 4**. Once it
 lands, every "yes" forces a "no" somewhere else.
 
-Crossing a stage boundary triggers a stage-unlock splash that names the
-stage and previews the new mechanics:
+Crossing a stage boundary triggers a confetti splash that names the new
+stage and previews the mechanics you're about to meet:
 
 <table>
 <tr>
-<td width="33%" align="center">
-  <img src="docs/assets/screenshots/40-stage3-inbox-approvals.png" alt="Stage 2 Unlocked splash — Welcome to Reality" width="260"><br>
-  <sub><b>Stage 2 splash</b> — Inbox Overload, Shield Meeting, Dashboard Report, Reorg Whispers.</sub>
+<td width="25%" align="center">
+  <img src="docs/assets/screenshots/10-stage-unlock-welcome-to-reality.png" alt="Stage 2 Unlocked — Welcome to Reality" width="220"><br>
+  <sub><b>Stage 2</b><br>Welcome to Reality</sub>
 </td>
-<td width="33%" align="center">
-  <img src="docs/assets/screenshots/50-stage4-people-alliances.png" alt="Stage 3 Unlocked splash — Bureaucracy" width="260"><br>
-  <sub><b>Stage 3 splash</b> — Approval Chains, Pass to Boss, Politics Doubles, Process Paralysis.</sub>
+<td width="25%" align="center">
+  <img src="docs/assets/screenshots/11-stage-unlock-bureaucracy.png" alt="Stage 3 Unlocked — Bureaucracy" width="220"><br>
+  <sub><b>Stage 3</b><br>Bureaucracy</sub>
 </td>
-<td width="33%" align="center">
-  <img src="docs/assets/screenshots/61-stage5-stage-unlock.png" alt="Stage 5 Unlocked splash — Executive Absurdity" width="260"><br>
-  <sub><b>Stage 5 splash</b> — Mandatory Committees, AI Notes Bot, Cook the Books, the Promotion endgame.</sub>
+<td width="25%" align="center">
+  <img src="docs/assets/screenshots/12-stage-unlock-corporate-madness.png" alt="Stage 4 Unlocked — Corporate Madness" width="220"><br>
+  <sub><b>Stage 4</b><br>Corporate Madness</sub>
+</td>
+<td width="25%" align="center">
+  <img src="docs/assets/screenshots/13-stage-unlock-executive-absurdity.png" alt="Stage 5 Unlocked — Executive Absurdity" width="220"><br>
+  <sub><b>Stage 5</b><br>Executive Absurdity</sub>
 </td>
 </tr>
 </table>
@@ -251,17 +256,17 @@ Everything ramps. New mechanics:
 - **Three new chaos events:** `reorg-announce`, `quarterly-surprise`,
   `two-town-halls`.
 
-Both new defensive tools appear in the Calendar header — Shield 60m
-(green, with a ×N counter once used) and Send Report (purple, disables
-after the daily use):
+Both new defensive tools appear in the Calendar header — **Shield 60m**
+(green, with a ×N counter once used) and **Send Report** (purple,
+disables after the daily use):
 
 <p align="center">
-  <img src="docs/assets/screenshots/30-stage2-calendar.png" alt="Stage 2 calendar showing Shield 60m and Send Report buttons in the header" width="380">
+  <img src="docs/assets/screenshots/20-stage2-calendar-defensive-tools.png" alt="Stage 2 calendar showing Shield 60m and Send Report buttons in the header" width="380">
 </p>
 
 Note the new title ("Wednesday · Week 2"), the smaller capacity strip
-showing "1/4 accepts left", and the Focus Time (Blocked) emerald block
-mid-day — the player's own Shield Meeting.
+showing "1/4 accepts left", and the **Focus Time (Blocked)** emerald block
+mid-day — the player's own Shield Meeting in action.
 
 **New failure:** **"Restructured"** — 4+ stakeholders at ≤50 → game over
 with the "exciting lateral move" letter.
@@ -288,6 +293,19 @@ The political stage. Mechanics:
 - **Politics ×1.5** — every relationship delta scales up.
 - **Three new chaos events:** `cfo-blocks-budget`, `cto-no-meeting-mondays`,
   `vp-quarterly-deepdive`.
+
+<table>
+<tr>
+<td width="50%" align="center">
+  <img src="docs/assets/screenshots/21-stage3-inbox-approval-chains.png" alt="Stage 3 inbox showing a Project Kickoff request with a green 'Ready to accept · 3/3' chip" width="320"><br>
+  <sub><b>Approval chains in action.</b> Top card: a Project Kickoff that needed 3 of 5 sign-offs. CFO, CTO, and VP have signed — the chip is green and Accept is no longer disabled. Avatars of the approvers are shown right on the card.</sub>
+</td>
+<td width="50%" align="center">
+  <img src="docs/assets/screenshots/24-chaos-modal-pass-to-boss.png" alt="Chaos modal showing CFO chaos with four response options including Pass to Boss" width="320"><br>
+  <sub><b>Pass to Boss</b> appears as the fourth chaos option in Stage 3+. Zero KPI hit, but David Chen takes a relationship hit ("They will remember"). The trade-off is the joke.</sub>
+</td>
+</tr>
+</table>
 
 **New failure:** **Process Paralysis** — every stakeholder ≤50
 simultaneously → game over with the "you've been technically PTO for three
@@ -334,6 +352,13 @@ The chaos stage. Mechanics:
 - **Four new chaos events:** `backchannel-cfo`, `feud-cto-vp`,
   `ceo-linkedin-disaster`, `board-pre-read-rush`.
 
+The People map gains green **ALLIANCE** arcs the moment a pair both cross
+≥70 — three are visible here (boss⇄CEO, CFO⇄CEO, CEO⇄VP):
+
+<p align="center">
+  <img src="docs/assets/screenshots/22-stage4-people-alliances.png" alt="Stage 4 People screen with three green ALLIANCE chips overlaying the stakeholder map" width="380">
+</p>
+
 **The Day 20 Board Sync** — climax event. Force-fired at day-start
 regardless of accept count: a 2-hour `board-sync` chaos. **At end of
 Day 20**, Stage 4 goals are evaluated:
@@ -363,9 +388,18 @@ The endgame stage. Mechanics:
 - **Cook the Books** — once-per-day action. **−20 Visibility for
   +10 ExecConf today.** Queues **−15 ExecConf for tomorrow** as
   `illusionDebt`. The math is a long-run loss; the short-run optics win
-  is the temptation. Surfaces as a yellow button on the Calendar header.
+  is the temptation.
 - **Three new chaos events:** `committee-spawn`, `ai-takeover`,
   `cfo-illusion-audit`.
+
+The Calendar header gains the third defensive button — **Cook the Books**
+(amber). The agenda below shows all three Stage 5 meeting types at once:
+a recurring Standup, the undeclinable Legacy Sync, a real QBR, and an
+auto-spawned Follow-up Committee:
+
+<p align="center">
+  <img src="docs/assets/screenshots/23-stage5-calendar-cook-the-books.png" alt="Stage 5 calendar with Shield, Send Report, and Cook the Books buttons; agenda shows Standup, Legacy Sync (Inherited), Quarterly Business Review, and Follow-up Committee" width="380">
+</p>
 
 **The Day 25 Promotion** — endgame evaluation:
 
@@ -373,6 +407,33 @@ The endgame stage. Mechanics:
   writes a real letter.
 - **3–4 hit** → **"Lateral move"**. Same Promotion screen, muted copy.
 - **≤2 hit** → **Performance Improvement Plan** (8th failure mode).
+
+---
+
+## Chaos events
+
+Random corporate interruptions that fire during day play, between accept
+#2 and accept #4 with a ~60% chance. The Chaos modal slides up from the
+bottom and shows the consequences of each response upfront — you're never
+surprised by the math, only by the situation.
+
+Each chaos event has up to **four responses**, each with its own KPI
+impact and relationship hit:
+
+- **Attend** — take the productivity hit, keep the boss happy.
+- **Delegate** — send a warrior in your place. Less KPI cost, mild
+  relationship hit.
+- **Reschedule** — punt the meeting. Big relationship hit.
+- **Pass to Boss** _(Stage 3+ only)_ — punt it to David. Zero KPI hit,
+  −15 Boss relationship. "They will remember."
+
+(See the Chaos modal screenshot in the [Stage 3](#stage-3--bureaucracy)
+section above.)
+
+The stage you're in determines the pool: Stage 1 has 4 events (CEO Quick
+Sync, Reply-All Storm, Mandatory Fun Friday, Executive LinkedIn Post).
+Stages 2–5 add 3–4 each. Some are force-fired regardless of accept count
+(Stage 2's Reorg, Stage 4's Day 20 Board Sync).
 
 ---
 
@@ -403,13 +464,24 @@ specifically because the ending IS the punchline.
 A "Lateral Move" (3–4 of 5 Stage 5 goals) routes to the Promotion screen
 with consolation copy. Not a failure, not a win.
 
-Every ending uses the same screen pattern — a thematic icon, the named
+Every failure uses the same screen pattern — a thematic icon, the named
 ending, an in-character body paragraph, your final 6-KPI snapshot, and a
-"Start over" button:
+"Start over" button. The Promotion (win) screen is a different surface:
+full-bleed brand purple gradient, confetti, David's congrats letter, and
+a stats card summarizing the 25-day run.
 
-<p align="center">
-  <img src="docs/assets/screenshots/70-game-over-restructured.png" alt="Game Over screen — You've Been 'Restructured' — with final KPI state and HR's lateral move letter" width="380">
-</p>
+<table>
+<tr>
+<td width="50%" align="center">
+  <img src="docs/assets/screenshots/40-game-over-restructured.png" alt="Game Over screen — You've Been 'Restructured' — with final KPI state and HR's lateral move letter" width="320"><br>
+  <sub><b>A failure ending</b> — the "Restructured" screen with HR's lateral-move letter and the final 6-KPI snapshot showing how the run ended.</sub>
+</td>
+<td width="50%" align="center">
+  <img src="docs/assets/screenshots/41-promotion-won.png" alt="Promotion screen — You've been promoted — with confetti, David Chen's letter, and the 25-day stats" width="320"><br>
+  <sub><b>The win condition.</b> Confetti, "You've been promoted." Day 25 / 5/5 goals hit / OUTCOME: PROMOTED. David writes the congrats letter himself.</sub>
+</td>
+</tr>
+</table>
 
 ---
 
@@ -430,6 +502,10 @@ throughout the run. Three kinds of conversations:
   on-decline, on-chaos, random). They support **player replies** — three
   options per DM, each shifting the stakeholder's relationship by
   +3 / 0 / −4 (scaled by the politics multiplier).
+
+<p align="center">
+  <img src="docs/assets/screenshots/08-chat-list.png" alt="Chat list showing four group channels and two incoming DMs (Acme Ops, Marcus Hale)" width="380">
+</p>
 
 Every chat event keys off a `ChatEvent` discriminated union. New
 mechanics generally add a new event type (`approval-cleared`,
@@ -480,5 +556,6 @@ npm run screenshots  # in another — Playwright + Chromium
 
 The script (`scripts/take-screenshots.mjs`) opens the live preview, pokes
 the Zustand store via `window.__useGame.setState(...)` to land on each
-scene, and saves PNGs to `docs/assets/screenshots/`. Store exposure on
-window is dev-only — see `src/main.tsx`.
+scene, and saves PNGs to `docs/assets/screenshots/`. The script wipes the
+output directory before each run, so renaming a scene won't leave orphan
+files behind. Store exposure on window is dev-only — see `src/main.tsx`.
