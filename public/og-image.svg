@@ -50,31 +50,32 @@
     <text x="118" y="98" fill="#FFFFFF" opacity="0.6" font-size="11" font-weight="600" letter-spacing="2">v1.0 · BETA</text>
 
     <!-- Yellow kicker chip top-right -->
-    <g transform="translate(820 64)">
-      <rect width="320" height="36" rx="18" fill="#FBBF24" fill-opacity="0.16" stroke="#FBBF24" stroke-opacity="0.4"/>
+    <g transform="translate(910 64)">
+      <rect width="230" height="36" rx="18" fill="#FBBF24" fill-opacity="0.16" stroke="#FBBF24" stroke-opacity="0.4"/>
       <circle cx="22" cy="18" r="5" fill="#FBBF24"/>
-      <text x="40" y="23" fill="#FCD34D" font-size="13" font-weight="700" letter-spacing="2.5">A SATIRICAL CORPORATE SIM</text>
+      <text x="40" y="23" fill="#FCD34D" font-size="13" font-weight="700" letter-spacing="2.5">BROWSER GAME · BETA</text>
     </g>
   </g>
 
-  <!-- ── Hero: the question ── -->
-  <!-- Centered + safe — fits a square crop in WhatsApp thumbnails too -->
+  <!-- ── Hero: the satirical setup + punchline ── -->
+  <!-- Centered + safe so WhatsApp's square thumbnail crop still works.
+       Three lines: setup (white), continuation (white), punchline (amber). -->
   <g font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" text-anchor="middle">
-    <text x="600" y="270" fill="#FFFFFF" font-size="84" font-weight="800" letter-spacing="-3">
-      Can you take the
+    <text x="600" y="225" fill="#FFFFFF" font-size="64" font-weight="800" letter-spacing="-2">
+      A satirical browser game
     </text>
-    <text x="600" y="370" fill="#FFFFFF" font-size="84" font-weight="800" letter-spacing="-3">
-      promotion in <tspan fill="#FBBF24">25 days?</tspan>
+    <text x="600" y="305" fill="#FFFFFF" font-size="64" font-weight="800" letter-spacing="-2">
+      about getting promoted.
+    </text>
+    <text x="600" y="395" fill="#FBBF24" font-size="58" font-weight="800" font-style="italic" letter-spacing="-1.5">
+      Or fired. Or &#8220;restructured.&#8221;
     </text>
   </g>
 
   <!-- ── Stats strip ── -->
   <g font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" text-anchor="middle">
-    <text x="600" y="455" fill="#E9D5FF" font-size="22" font-weight="500">
-      127 meetings a week. 6 executives who remember everything.
-    </text>
-    <text x="600" y="488" fill="#C4B5FD" font-size="18" font-weight="500">
-      One promotion. Eight ways to fail.
+    <text x="600" y="465" fill="#E9D5FF" font-size="20" font-weight="500">
+      25 days · 6 executives · 127 meetings a week · 8 endings
     </text>
   </g>
 
