@@ -51,7 +51,7 @@
 
     <!-- Yellow kicker chip top-right -->
     <g transform="translate(970 64)">
-      <rect width="170" height="36" rx="18" fill="#FBBF24" fill-opacity="0.16" stroke="#FBBF24" stroke-opacity="0.4"/>
+      <rect width="190" height="36" rx="18" fill="#FBBF24" fill-opacity="0.16" stroke="#FBBF24" stroke-opacity="0.4"/>
       <circle cx="22" cy="18" r="5" fill="#FBBF24"/>
       <text x="40" y="23" fill="#FCD34D" font-size="13" font-weight="700" letter-spacing="2.5">BROWSER GAME</text>
     </g>
