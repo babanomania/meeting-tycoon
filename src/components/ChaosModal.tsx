@@ -31,7 +31,7 @@ export function ChaosModal() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 z-50 bg-ink-800/40 backdrop-blur-sm flex items-end md:items-center justify-center"
+          className="absolute inset-0 z-50 bg-ink-800/40 backdrop-blur-sm flex items-end lg:items-center justify-center"
         >
           <motion.div
             key="chaos-card"
@@ -39,7 +39,7 @@ export function ChaosModal() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="w-full bg-white rounded-t-2xl md:rounded-2xl md:m-5 shadow-el-4 overflow-hidden"
+            className="w-full bg-white rounded-t-2xl lg:rounded-2xl lg:m-5 shadow-el-4 overflow-hidden"
           >
             {/* Header — Teams-style alert banner */}
             <div className="bg-rose-50 border-b border-rose-100 px-4 py-3 flex items-start gap-3">

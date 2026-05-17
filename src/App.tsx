@@ -7,6 +7,7 @@ import { ChaosModal } from './components/ChaosModal';
 import { MeetingDetailSheet } from './components/MeetingDetailSheet';
 import { KpiToast } from './components/KpiToast';
 import { SettingsDrawer } from './components/SettingsDrawer';
+import { Landing } from './screens/Landing';
 import { Onboarding } from './screens/Onboarding';
 import { CalendarScreen } from './screens/Calendar';
 import { InboxScreen } from './screens/Inbox';
@@ -44,6 +45,10 @@ export function App() {
     if (gameOver && screen !== 'game-over') setScreen('game-over');
     else if (stageUnlocked && !gameOver && screen !== 'stage-unlock') setScreen('stage-unlock');
   }, [gameOver, stageUnlocked, screen, setScreen]);
+
+  // Landing page lives OUTSIDE the PhoneFrame — it's a full-width marketing
+  // surface, not a phone screen. First-time visitors land here.
+  if (screen === 'landing') return <Landing />;
 
   const inboxCount = useMemo(
     () => pendingRequestsFor(day, accepted, schedule).length,

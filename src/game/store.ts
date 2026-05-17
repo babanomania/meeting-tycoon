@@ -554,7 +554,7 @@ function fireMeetingHeldMessages(
 export const useGame = create<GameState>()(
   persist(
     (set, get) => ({
-      screen: 'onboarding',
+      screen: 'landing',
       stage: 1,
       day: 1,
       kpis: STARTING_KPIS,
@@ -1472,7 +1472,7 @@ export const useGame = create<GameState>()(
 
       resetGame: () => {
         set({
-          screen: 'onboarding',
+          screen: 'landing',
           stage: 1,
           day: 1,
           kpis: STARTING_KPIS,
@@ -1527,11 +1527,9 @@ export const useGame = create<GameState>()(
     }),
     {
       name: 'meeting-tycoon-save',
-      // Bumped for Stage 4: new state fields (prDisasterStrikes, boardSyncResult)
-      // + new game-over reasons (board-confidence-lost, pr-disaster-reassigned)
-      // + new chaos events (backchannel-cfo, feud-cto-vp, ceo-linkedin-disaster,
-      // board-pre-read-rush, board-sync). Old saves wipe.
-      version: 12,
+      // Bumped to add the 'landing' FlowScreen as default for first-time
+      // visitors so the landing page shows before the onboarding flow.
+      version: 13,
       migrate: () => undefined,
     },
   ),

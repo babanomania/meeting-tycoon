@@ -6,6 +6,11 @@
   <img src="docs/assets/hero.svg" alt="Meeting Tycoon — a mobile-styled calendar overflowing with meetings, KPI chips, and a panicked Slack message from engineering" width="100%">
 </p>
 
+<p align="center">
+  <a href="https://babanomania.github.io/meeting-tycoon/"><strong>▶ Play now</strong></a>
+  · auto-deployed from <code>main</code> via GitHub Pages
+</p>
+
 You play a new manager at **Acme Corp**, a 23-person company that holds 127
 meetings a week and spends 2% of its time on actual work. Your job: triage an
 inbox of meeting requests, defend your calendar, keep six leadership
@@ -42,6 +47,16 @@ npm run typecheck  # tsc -b --noEmit
 No backend. No accounts. The game state lives in `localStorage` under the key
 `meeting-tycoon-save` — bumping `persist.version` in `src/game/store.ts`
 wipes all saves on next load.
+
+### Deploying
+
+Every push to `main` triggers `.github/workflows/deploy.yml`, which runs
+`npm ci && npm run build` with `VITE_BASE_PATH=/meeting-tycoon/` and
+publishes `dist/` to GitHub Pages. Live URL:
+<https://babanomania.github.io/meeting-tycoon/>.
+
+The same build runs locally with `npm run build && npm run preview` (no
+env var needed — Vite serves at `/` in preview mode).
 
 ---
 

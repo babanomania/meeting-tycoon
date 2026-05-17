@@ -72,6 +72,7 @@ export interface MeetingRequest {
 export type StageId = 1 | 2 | 3 | 4 | 5;
 
 export type FlowScreen =
+  | 'landing'
   | 'onboarding'
   | 'calendar'
   | 'inbox'

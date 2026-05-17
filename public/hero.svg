@@ -1,0 +1,215 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 500" role="img" aria-label="Meeting Tycoon — a satirical corporate management sim" preserveAspectRatio="xMidYMid meet">
+  <title>Meeting Tycoon</title>
+  <desc>Hero banner: bold wordmark on a purple gradient with a clean calendar-day card on the right.</desc>
+
+  <defs>
+    <!-- Brand gradient background -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7C3AED"/>
+      <stop offset="0.55" stop-color="#5B21B6"/>
+      <stop offset="1" stop-color="#3B0764"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.78" cy="0.5" r="0.55">
+      <stop offset="0" stop-color="#A78BFA" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#A78BFA" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Subtle paper texture for the card -->
+    <linearGradient id="cardBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F8FAFC"/>
+    </linearGradient>
+
+    <!-- Meeting block fills -->
+    <linearGradient id="mRecurring" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EDE9FE"/>
+      <stop offset="1" stop-color="#DDD6FE"/>
+    </linearGradient>
+    <linearGradient id="mMedium" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FEF3C7"/>
+      <stop offset="1" stop-color="#FDE68A"/>
+    </linearGradient>
+    <linearGradient id="mHigh" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE4E6"/>
+      <stop offset="1" stop-color="#FECDD3"/>
+    </linearGradient>
+    <linearGradient id="mCrisis" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FECACA"/>
+      <stop offset="1" stop-color="#FCA5A5"/>
+    </linearGradient>
+
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#1E0A3C" flood-opacity="0.45"/>
+    </filter>
+    <filter id="badgeShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#1E0A3C" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- ── Background ── -->
+  <rect width="1600" height="500" fill="url(#bg)"/>
+  <rect width="1600" height="500" fill="url(#glow)"/>
+
+  <!-- A few large soft circles for depth (won't read as busy) -->
+  <circle cx="180"  cy="60"  r="220" fill="#FFFFFF" opacity="0.04"/>
+  <circle cx="1480" cy="480" r="280" fill="#FFFFFF" opacity="0.05"/>
+
+  <!-- ── LEFT: Wordmark + tagline + chips ── -->
+  <g font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <!-- Small kicker -->
+    <g transform="translate(80 120)">
+      <rect width="8" height="8" rx="2" fill="#FBBF24"/>
+      <text x="20" y="9" fill="#FBBF24" font-size="13" font-weight="700" letter-spacing="3">A SATIRICAL CORPORATE SIM</text>
+    </g>
+
+    <!-- Wordmark -->
+    <text x="80" y="240" fill="#FFFFFF" font-size="108" font-weight="800" letter-spacing="-3">Meeting</text>
+    <text x="80" y="340" fill="#FFFFFF" font-size="108" font-weight="800" letter-spacing="-3">Tycoon.</text>
+
+    <!-- Tagline -->
+    <text x="80" y="390" fill="#E9D5FF" font-size="20" font-weight="500">
+      Schedule meetings. Survive politics. Maintain the illusion.
+    </text>
+
+    <!-- Tech chips -->
+    <g transform="translate(80 420)">
+      <g>
+        <rect width="98" height="28" rx="14" fill="#FFFFFF" opacity="0.10"/>
+        <rect width="98" height="28" rx="14" fill="none" stroke="#FFFFFF" stroke-opacity="0.18"/>
+        <text x="49" y="19" fill="#FFFFFF" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="0.8">REACT · TS</text>
+      </g>
+      <g transform="translate(108 0)">
+        <rect width="98" height="28" rx="14" fill="#FFFFFF" opacity="0.10"/>
+        <rect width="98" height="28" rx="14" fill="none" stroke="#FFFFFF" stroke-opacity="0.18"/>
+        <text x="49" y="19" fill="#FFFFFF" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="0.8">ZUSTAND</text>
+      </g>
+      <g transform="translate(216 0)">
+        <rect width="98" height="28" rx="14" fill="#FFFFFF" opacity="0.10"/>
+        <rect width="98" height="28" rx="14" fill="none" stroke="#FFFFFF" stroke-opacity="0.18"/>
+        <text x="49" y="19" fill="#FFFFFF" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="0.8">TAILWIND</text>
+      </g>
+      <g transform="translate(324 0)">
+        <rect width="98" height="28" rx="14" fill="#FFFFFF" opacity="0.10"/>
+        <rect width="98" height="28" rx="14" fill="none" stroke="#FFFFFF" stroke-opacity="0.18"/>
+        <text x="49" y="19" fill="#FFFFFF" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="0.8">VITE</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ── RIGHT: One clean Day card ── -->
+  <g transform="translate(900 50)" filter="url(#cardShadow)" font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <!-- Card surface -->
+    <rect width="620" height="400" rx="16" fill="url(#cardBg)"/>
+
+    <!-- Header strip -->
+    <rect width="620" height="76" rx="16" fill="#FFFFFF"/>
+    <rect y="56" width="620" height="20" fill="#FFFFFF"/>
+    <text x="28" y="34" fill="#94A3B8" font-size="11" font-weight="700" letter-spacing="2.5">STAGE 1 · DAY 3 OF 5</text>
+    <text x="28" y="60" fill="#0F172A" font-size="24" font-weight="800" letter-spacing="-0.5">Wednesday</text>
+
+    <!-- Inbox pill (top right) -->
+    <g transform="translate(490 24)">
+      <rect width="100" height="32" rx="6" fill="#EDE9FE" stroke="#DDD6FE"/>
+      <text x="20" y="21" fill="#5B21B6" font-size="12" font-weight="700">Inbox</text>
+      <circle cx="78" cy="16" r="11" fill="#7C3AED"/>
+      <text x="78" y="20" fill="#FFFFFF" font-size="11" font-weight="800" text-anchor="middle">5</text>
+    </g>
+
+    <!-- Divider -->
+    <rect y="86" width="620" height="1" fill="#E2E8F0"/>
+
+    <!-- Goals row -->
+    <g transform="translate(28 102)">
+      <text fill="#64748B" font-size="11" font-weight="700" letter-spacing="2">GOALS</text>
+      <g transform="translate(70 -8)">
+        <rect width="60"  height="8" rx="4" fill="#10B981"/>
+        <rect x="68"   width="60"  height="8" rx="4" fill="#10B981"/>
+        <rect x="136"  width="60"  height="8" rx="4" fill="#E2E8F0"/>
+        <rect x="204"  width="60"  height="8" rx="4" fill="#10B981"/>
+        <rect x="272"  width="60"  height="8" rx="4" fill="#E2E8F0"/>
+      </g>
+      <text x="546" y="0" fill="#475569" font-size="13" font-weight="800" text-anchor="end">3 / 5</text>
+    </g>
+
+    <!-- Capacity strip -->
+    <rect y="124" width="620" height="28" fill="#F8FAFC"/>
+    <text x="28"  y="143" fill="#334155" font-size="11" font-weight="700">4</text>
+    <text x="42"  y="143" fill="#64748B" font-size="11">on calendar</text>
+    <text x="124" y="143" fill="#CBD5E1" font-size="11">·</text>
+    <text x="138" y="143" fill="#334155" font-size="11" font-weight="700">5.5h</text>
+    <text x="170" y="143" fill="#64748B" font-size="11">booked</text>
+    <text x="218" y="143" fill="#CBD5E1" font-size="11">·</text>
+    <text x="232" y="143" fill="#10B981" font-size="11" font-weight="700">3.5h</text>
+    <text x="264" y="143" fill="#64748B" font-size="11">focus</text>
+    <text x="592" y="143" fill="#0F172A" font-size="11" font-weight="700" text-anchor="end">1 / 5 accepts left</text>
+
+    <!-- Meeting blocks -->
+    <g transform="translate(28 168)">
+      <!-- Standup (recurring) -->
+      <g>
+        <rect width="564" height="44" rx="6" fill="url(#mRecurring)" stroke="#C4B5FD" stroke-opacity="0.5"/>
+        <rect width="5" height="44" fill="#7C3AED"/>
+        <text x="20" y="20" fill="#1E1B4B" font-size="13" font-weight="700">Team Standup</text>
+        <text x="20" y="34" fill="#5B21B6" font-size="11">9:00 – 9:30 AM · recurring</text>
+        <text x="544" y="27" fill="#5B21B6" font-size="11" font-weight="700" text-anchor="end">8 attendees</text>
+      </g>
+
+      <!-- 1on1 (medium) -->
+      <g transform="translate(0 52)">
+        <rect width="564" height="44" rx="6" fill="url(#mMedium)" stroke="#FCD34D" stroke-opacity="0.5"/>
+        <rect width="5" height="44" fill="#D97706"/>
+        <text x="20" y="20" fill="#78350F" font-size="13" font-weight="700">1:1 with Your Boss</text>
+        <text x="20" y="34" fill="#92400E" font-size="11">10:00 – 10:30 AM · "just a sync"</text>
+        <text x="544" y="27" fill="#92400E" font-size="11" font-weight="700" text-anchor="end">2 attendees</text>
+      </g>
+
+      <!-- Stakeholder Sync (high) -->
+      <g transform="translate(0 104)">
+        <rect width="564" height="44" rx="6" fill="url(#mHigh)" stroke="#FB7185" stroke-opacity="0.5"/>
+        <rect width="5" height="44" fill="#E11D48"/>
+        <text x="20" y="20" fill="#881337" font-size="13" font-weight="700">Stakeholder Sync</text>
+        <text x="20" y="34" fill="#9F1239" font-size="11">11:00 AM – 12:00 PM · five people, zero decisions</text>
+        <text x="544" y="27" fill="#9F1239" font-size="11" font-weight="700" text-anchor="end">5 attendees</text>
+      </g>
+
+      <!-- Engineering Escalation (crisis) -->
+      <g transform="translate(0 156)">
+        <rect width="564" height="44" rx="6" fill="url(#mCrisis)" stroke="#F87171" stroke-opacity="0.6"/>
+        <rect width="5" height="44" fill="#B91C1C"/>
+        <text x="20" y="20" fill="#7F1D1D" font-size="13" font-weight="700">Engineering Escalation</text>
+        <text x="20" y="34" fill="#991B1B" font-size="11">2:00 – 3:00 PM · prod is fine, the meeting is not</text>
+        <text x="544" y="27" fill="#991B1B" font-size="11" font-weight="700" text-anchor="end">CRISIS</text>
+      </g>
+    </g>
+
+  </g>
+
+  <!-- ── Floating chaos badge over top-right of card ── -->
+  <g transform="translate(1380 30)" filter="url(#badgeShadow)" font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <rect width="190" height="74" rx="10" fill="#FFFFFF"/>
+    <rect width="190" height="22" rx="10" fill="#FEF3C7"/>
+    <rect y="12" width="190" height="10" fill="#FEF3C7"/>
+    <text x="14" y="15" fill="#B45309" font-size="10" font-weight="800" letter-spacing="1.5">⚡ INTERRUPTION</text>
+    <text x="14" y="44" fill="#0F172A" font-size="13" font-weight="800">CEO Added a</text>
+    <text x="14" y="58" fill="#0F172A" font-size="13" font-weight="800">"Quick Sync"</text>
+    <text x="14" y="70" fill="#94A3B8" font-size="9.5" font-style="italic">No agenda. Cannot wait.</text>
+  </g>
+
+  <!-- ── Floating KPI chip overlapping the card bottom-left ── -->
+  <g transform="translate(840 400)" filter="url(#badgeShadow)" font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <rect width="200" height="64" rx="10" fill="#FFFFFF"/>
+    <rect width="5" height="64" rx="2.5" fill="#10B981"/>
+    <text x="20" y="22" fill="#94A3B8" font-size="10" font-weight="800" letter-spacing="1.5">PRODUCTIVITY</text>
+    <text x="20" y="50" fill="#0F172A" font-size="26" font-weight="800">62</text>
+    <text x="64" y="49" fill="#94A3B8" font-size="11">/ 100</text>
+    <g transform="translate(140 30)">
+      <path d="M0 12 L8 0 L16 12 Z" fill="#10B981"/>
+      <text x="22" y="13" fill="#10B981" font-size="14" font-weight="800">4</text>
+    </g>
+  </g>
+
+  <!-- ── Footer micro-text bottom-left ── -->
+  <text x="80" y="468" fill="#FFFFFF" opacity="0.4" font-size="11" font-weight="700" letter-spacing="2" font-family="'Inter', -apple-system, sans-serif">
+    5 STAGES · 25 DAYS · 1 INEVITABLE PROMOTION
+  </text>
+</svg>
