@@ -134,18 +134,15 @@ export function StageUnlock() {
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.35 + i * 0.07 }}
-            className="bg-white rounded-md border border-ink-100 shadow-el-1 p-3 flex items-center gap-3"
+            className="bg-white rounded-md border border-ink-100 shadow-el-1 p-3 flex items-start gap-3"
           >
-            <div className="w-9 h-9 rounded-md bg-brand-50 text-brand-700 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-md bg-brand-50 text-brand-700 flex items-center justify-center shrink-0">
               <Icon name={u.icon} size={16} />
             </div>
-            <div className="flex-1">
-              <div className="text-[13.5px] font-semibold text-ink-800">{u.title}</div>
-              <div className="text-[11.5px] text-ink-500">{u.sub}</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[13.5px] font-semibold text-ink-800 leading-snug">{u.title}</div>
+              <div className="text-[11.5px] text-ink-500 mt-0.5 leading-snug">{u.sub}</div>
             </div>
-            <span className="text-[9.5px] font-bold tracking-widest text-brand-600 uppercase">
-              Preview
-            </span>
           </motion.div>
         ))}
       </div>
