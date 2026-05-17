@@ -93,6 +93,9 @@ export const MEETING_CHAT_META: Record<MeetingTypeId, { participants: string[] }
   'board-pre-read':  { participants: ['CFO', 'CEO', 'You'] },
   'quarterly-review': { participants: ['CEO', 'CFO', 'VP Strategy', 'You'] },
   'reorg-meeting':   { participants: ['CEO', 'CHRO', 'You'] },
+  // ── Stage 5 ──
+  'committee':       { participants: ['You', 'Sam T.', 'Pat L.', 'Alex P.', 'HR'] },
+  'legacy-meeting':  { participants: ['You', 'Brad Manager', 'CHRO', 'Sam T.'] },
 };
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -635,6 +638,80 @@ export const EVENT_REACTIONS: Array<{
       },
     ],
   },
+
+  // ── Stage 5 events ─────────────────────────────────────────────────────
+  // AI Notes Bot — floods #general after each meeting with a one-liner.
+  {
+    match: (e) => e.type === 'ai-notes-fired',
+    reactions: [
+      {
+        conversationId: 'group-general',
+        sender: 'Acme AI Notes Bot',
+        body: () => '📝 Summary attached. Key takeaway: alignment. Action items: alignment.',
+        reactions: ['🤖', '💀'],
+      },
+    ],
+  },
+  // Committee spawn — Sam reacts to the new auto-meeting on the calendar.
+  {
+    match: (e) => e.type === 'committee-spawned',
+    reactions: [
+      {
+        conversationId: 'group-general',
+        sender: 'Sam T.',
+        body: () => 'another committee. great. perfect. love this.',
+        reactions: ['🪑', '💀'],
+      },
+    ],
+  },
+  // Legacy meeting auto-spawn at day start.
+  {
+    match: (e) => e.type === 'legacy-spawned',
+    reactions: [
+      {
+        conversationId: 'group-general',
+        sender: 'Brad Manager',
+        body: () => 'reminder: the Legacy Sync is still on. nobody knows why.',
+        reactions: ['🏛️', '💀'],
+      },
+    ],
+  },
+  // Illusion spend — leadership applauds the (fake) numbers.
+  {
+    match: (e) => e.type === 'illusion-spent',
+    reactions: [
+      {
+        conversationId: 'group-leadership',
+        sender: 'CEO',
+        body: () => 'numbers are looking strong. very strong. board-ready strong.',
+        reactions: ['📈', '🚀'],
+      },
+    ],
+  },
+  // Stage 5 chaos: Diana audits the dashboards.
+  {
+    match: (e) => e.type === 'chaos-resolved' && e.chaosId === 'cfo-illusion-audit',
+    reactions: [
+      {
+        conversationId: 'group-leadership',
+        sender: 'CFO',
+        body: () => 'I have questions about your methodology. follow-up scheduled.',
+        reactions: ['🔍'],
+      },
+    ],
+  },
+  // Stage 5 chaos: the bot replied to a human.
+  {
+    match: (e) => e.type === 'chaos-resolved' && e.chaosId === 'ai-takeover',
+    reactions: [
+      {
+        conversationId: 'group-engineering',
+        sender: 'Dev S.',
+        body: () => "the bot's tone is more professional than mine. concerning.",
+        reactions: ['🤖', '💀'],
+      },
+    ],
+  },
 ];
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -710,6 +787,14 @@ export const MEETING_HELD_TEMPLATES: Partial<
   'reorg-meeting': [
     { sender: 'CHRO', body: 'thanks everyone for the energy. wellness resources are in the doc.' },
     { sender: 'Marcus W.', body: 'so... do I have a team. asking generally.', reactions: ['💀', '🌀'] },
+  ],
+  // ── Stage 5 ──
+  committee: [
+    { sender: 'Sam T.', body: 'committee chartered. sub-committee forming.', reactions: ['🪑'] },
+    { sender: 'HR', body: 'follow-up scheduled. and a follow-up to that.' },
+  ],
+  'legacy-meeting': [
+    { sender: 'Brad Manager', body: 'nobody knows why this meeting exists. we attend it anyway.', reactions: ['🏛️', '💀'] },
   ],
 };
 

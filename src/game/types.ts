@@ -32,7 +32,10 @@ export type MeetingTypeId =
   | 'shield-meeting'   // defensive self-block, +Prod +Morale, no relationship impact
   | 'board-pre-read'   // CFO/Board high-pressure prep
   | 'quarterly-review' // QBR slide deck rush
-  | 'reorg-meeting';   // forced reorg announcement attendance
+  | 'reorg-meeting'    // forced reorg announcement attendance
+  // ── Stage 5 mechanics ──
+  | 'committee'        // auto-spawned 30-min follow-up that haunts you
+  | 'legacy-meeting';  // inherited from "before your time", undeclinable
 
 export interface MeetingType {
   id: MeetingTypeId;
@@ -54,6 +57,10 @@ export interface ScheduledMeeting {
   recurring?: boolean;
   /** Original source description (e.g. "Engineering", "CEO") — kept for display in the detail sheet. */
   from?: string;
+  /** Stage 5: legacy meetings cannot be removed by the player. */
+  legacy?: boolean;
+  /** Stage 5: auto-spawned committee follow-up. Shown with subtler styling. */
+  committee?: boolean;
 }
 
 export interface MeetingRequest {
@@ -81,7 +88,8 @@ export type FlowScreen =
   | 'home'
   | 'people'
   | 'game-over'
-  | 'stage-unlock';
+  | 'stage-unlock'
+  | 'promotion';
 
 export interface ChaosEvent {
   id: string;
@@ -194,7 +202,12 @@ export type ChatEvent =
   | { type: 'feud-detected'; pair: [StakeholderId, StakeholderId] }
   | { type: 'pr-disaster-fired' }
   | { type: 'board-sync-passed'; goalsMet: number; goalsTotal: number }
-  | { type: 'board-sync-failed'; goalsMet: number; goalsTotal: number };
+  | { type: 'board-sync-failed'; goalsMet: number; goalsTotal: number }
+  // ── Stage 5 events ──
+  | { type: 'ai-notes-fired'; meetingTypeId: MeetingTypeId }
+  | { type: 'committee-spawned'; parentTypeId: MeetingTypeId }
+  | { type: 'legacy-spawned' }
+  | { type: 'illusion-spent' };
 
 export type ActivityKind =
   | 'meeting-scheduled'
@@ -264,7 +277,8 @@ export type GameOverReason =
   | 'restructured'
   | 'process-paralysis'
   | 'board-confidence-lost'
-  | 'pr-disaster-reassigned';
+  | 'pr-disaster-reassigned'
+  | 'performance-improvement-plan';
 
 export interface GameOver {
   reason: GameOverReason;

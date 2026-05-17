@@ -8,6 +8,7 @@ import { MeetingDetailSheet } from './components/MeetingDetailSheet';
 import { KpiToast } from './components/KpiToast';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { Landing } from './screens/Landing';
+import { Promotion } from './screens/Promotion';
 import { Onboarding } from './screens/Onboarding';
 import { CalendarScreen } from './screens/Calendar';
 import { InboxScreen } from './screens/Inbox';
@@ -49,6 +50,10 @@ export function App() {
   // Landing page lives OUTSIDE the PhoneFrame — it's a full-width marketing
   // surface, not a phone screen. First-time visitors land here.
   if (screen === 'landing') return <Landing />;
+
+  // The end-of-game Promotion screen is also full-width — the celebration
+  // doesn't fit in a 400×860 frame, and it deserves the full canvas.
+  if (screen === 'promotion') return <Promotion />;
 
   const inboxCount = useMemo(
     () => pendingRequestsFor(day, accepted, schedule).length,

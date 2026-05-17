@@ -53,12 +53,13 @@ const STAGE_META: Record<number, StageMeta> = {
   5: {
     name: 'Executive Absurdity',
     tagline:
-      'Committees run everything. You maintain the illusion. Stage 5 is being built — for now expect Stage 4 mechanics with even less margin.',
+      'Committees run everything. The Notes Bot has opinions. You can cook the books. Day 25 either promotes you or PIPs you — there is no in-between except "lateral move".',
     unlocks: [
-      { icon: 'people',   title: 'Mandatory Committees',   sub: 'Every accepted meeting spawns 1-2 follow-ups. In design.' },
-      { icon: 'sparkle',  title: 'AI Meeting Notes Bot',   sub: 'A bot floods #general after every meeting. In design.' },
-      { icon: 'eye',      title: 'Executive Dashboard',    sub: 'Toggle to "Board View" — numbers shown as 1.5x reality. In design.' },
-      { icon: 'star',     title: 'The Promotion',          sub: 'End Day 25 with all 5 goals hit and retire as VP. In design.' },
+      { icon: 'people',   title: 'Mandatory Committees',   sub: 'Every meeting you accept spawns a 30-min Follow-up Committee on the calendar. Free of charge.' },
+      { icon: 'sparkle',  title: 'AI Meeting Notes Bot',   sub: 'After every meeting the bot floods #general with a summary. Visibility goes up. Morale goes down. Compounds.' },
+      { icon: 'briefcase', title: 'Legacy Meetings',       sub: 'One inherited meeting auto-appears every day. Cannot be declined. Cannot be removed. Nobody remembers what it is for.' },
+      { icon: 'star',     title: 'Cook the Books',         sub: '-20 Visibility to fake +10 ExecConf today. -15 ExecConf hits tomorrow. The optics win is real. The crash is real.' },
+      { icon: 'fire',     title: 'The Promotion',          sub: 'Day 25 evaluates all 5 Stage 5 goals. 5/5 = VP. 3-4 = lateral move. ≤2 = Performance Improvement Plan.' },
     ],
   },
 };
@@ -152,12 +153,6 @@ export function StageUnlock() {
       <div className="flex-1" />
 
       <div className="px-5 pb-6 pt-3 space-y-2">
-        {stageUnlocked >= 3 && (
-          <p className="text-center text-[11px] text-ink-400">
-            (Stage {stageUnlocked} mechanics are still in development. For now, expect Stage 2's pressure with
-            mounting absurdity.)
-          </p>
-        )}
         <button
           onClick={() => {
             clear();

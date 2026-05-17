@@ -61,8 +61,10 @@ export function CalendarScreen() {
   const stakeholders = useGame((s) => s.stakeholders);
   const scheduleShieldMeeting = useGame((s) => s.scheduleShieldMeeting);
   const sendDashboardReport = useGame((s) => s.sendDashboardReport);
+  const cookTheBooks = useGame((s) => s.cookTheBooks);
   const dashboardSentToday = useGame((s) => s.dashboardSentToday);
   const shieldMeetingsToday = useGame((s) => s.shieldMeetingsToday);
+  const illusionSpentToday = useGame((s) => s.illusionSpentToday);
   const carryover = useGame((s) => s.carryoverRequests);
 
   const cap = capFor(stage);
@@ -111,13 +113,14 @@ export function CalendarScreen() {
       {/* Stage 2+ defensive actions: Shield & Dashboard. These are the "play
           back" surfaces — for the first time, the player can spend a slot on
           themselves (Shield) or trade an hour of meetings for a slide deck
-          (Dashboard). Hidden until Stage 2 to keep onboarding clean. */}
+          (Dashboard). Hidden until Stage 2 to keep onboarding clean.
+          Stage 5 adds Cook the Books — short-term win, long-term loss. */}
       {stage >= 2 && (
-        <div className="px-5 py-2.5 border-b border-ink-100 flex gap-2">
+        <div className="px-5 py-2.5 border-b border-ink-100 flex gap-2 flex-wrap">
           <button
             onClick={scheduleShieldMeeting}
             disabled={acceptsLeft === 0}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-sm bg-emerald-50 text-emerald-700 border border-emerald-100 font-semibold text-[12px] hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 min-w-[110px] inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-sm bg-emerald-50 text-emerald-700 border border-emerald-100 font-semibold text-[12px] hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Block 60 min of focus time. Costs one accept slot. No relationship hit."
           >
             <Icon name="shield" size={14} />
@@ -131,12 +134,23 @@ export function CalendarScreen() {
           <button
             onClick={sendDashboardReport}
             disabled={dashboardSentToday}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-sm bg-brand-50 text-brand-700 border border-brand-100 font-semibold text-[12px] hover:bg-brand-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 min-w-[110px] inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-sm bg-brand-50 text-brand-700 border border-brand-100 font-semibold text-[12px] hover:bg-brand-100 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Send a dashboard report instead of attending. Once per day."
           >
             <Icon name="send" size={14} />
             {dashboardSentToday ? 'Sent today' : 'Send Report'}
           </button>
+          {stage >= 5 && (
+            <button
+              onClick={cookTheBooks}
+              disabled={illusionSpentToday}
+              className="flex-1 min-w-[110px] inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-sm bg-amber-50 text-amber-700 border border-amber-100 font-semibold text-[12px] hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Spend -20 Visibility for +10 ExecConf now. -15 ExecConf tomorrow."
+            >
+              <Icon name="sparkle" size={14} />
+              {illusionSpentToday ? 'Cooked today' : 'Cook the Books'}
+            </button>
+          )}
         </div>
       )}
 

@@ -280,14 +280,14 @@ const STAGES: { n: number; name: string; hook: string; status: 'shipped' | 'desi
   { n: 2, name: 'Welcome to Reality',   hook: 'Cap drops to 4. Shield Meetings unlock. One reorg.', status: 'shipped' },
   { n: 3, name: 'Bureaucracy',          hook: 'Approval chains. Politics ×1.5. Pass to Boss.', status: 'shipped' },
   { n: 4, name: 'Corporate Madness',    hook: 'Alliances, feuds, PR Disaster, Day-20 Board Sync.', status: 'shipped' },
-  { n: 5, name: 'Executive Absurdity',  hook: 'Mandatory committees. The promotion endgame.', status: 'design' },
+  { n: 5, name: 'Executive Absurdity',  hook: 'Committees spawn. Cook the books. Day 25 Promotion or PIP.', status: 'shipped' },
 ];
 
 const STATS = [
-  { value: '4', label: 'Stages playable' },
-  { value: '24', label: 'Meeting types' },
-  { value: '11', label: 'Chaos events' },
-  { value: '6', label: 'Failure modes' },
+  { value: '5', label: 'Stages playable' },
+  { value: '26', label: 'Meeting types' },
+  { value: '14', label: 'Chaos events' },
+  { value: '7', label: 'Failure modes' },
 ];
 
 function BackgroundGrid() {

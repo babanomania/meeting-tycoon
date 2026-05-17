@@ -31,6 +31,7 @@ import {
   MEETING_TYPES,
   STAGE1_GOALS,
   STAGE4_GOALS,
+  STAGE5_GOALS,
   capFor,
   politicsMultiplier,
   requestsForDay,
@@ -61,6 +62,7 @@ const STAGE1_LAST_DAY = 5;
 const STAGE2_LAST_DAY = 10;
 const STAGE3_LAST_DAY = 15;
 const STAGE4_LAST_DAY = 20;
+const STAGE5_LAST_DAY = 25;
 
 /**
  * Stage 4: each active alliance pumps one themed KPI by this much at day-end.
@@ -175,7 +177,17 @@ const checkGameOver = (
    *  cumulative PR disasters and the Board Sync outcome. */
   prDisasterStrikes: number = 0,
   boardSyncFailed: boolean = false,
+  pipFailed: boolean = false,
 ): GameOver | null => {
+  // ── Stage 5 PIP — lose the Promotion, get the "growth opportunity" letter.
+  if (pipFailed) {
+    return {
+      reason: 'performance-improvement-plan',
+      emoji: '📄',
+      title: 'Performance Improvement Plan',
+      body: '"We see real potential in your trajectory." HR has prepared a 90-day plan. Daily check-ins. Weekly skip-levels. Three of the four bullet points are about "communication".',
+    };
+  }
   // ── Stage 4 thematic endings, checked first so they outrank generic ones.
   if (boardSyncFailed) {
     return {
@@ -295,6 +307,14 @@ interface GameState {
   /** Result of the Day 20 Board Sync, set at end of Day 20. */
   boardSyncResult: { passed: boolean; goalsMet: number; goalsTotal: number } | null;
 
+  // ── Stage 5 mechanics ──
+  /** Player spent Visibility today to fake ExecConf. Resets at day start. */
+  illusionSpentToday: boolean;
+  /** ExecConf debt queued for tomorrow's day-end after an illusion spend. */
+  illusionDebt: number;
+  /** Result of the Day 25 Promotion evaluation, set at end of Day 25. */
+  promotionResult: { goalsMet: number; goalsTotal: number; outcome: 'promoted' | 'lateral' | 'pip' } | null;
+
   // ── Chat ───────────────────────────────────────────────────────────────
   conversations: Conversation[];
   /** Messages map: conversationId → array of messages (chronological). */
@@ -330,6 +350,8 @@ interface GameState {
   scheduleShieldMeeting: () => void;
   /** Stage 2+: send a dashboard report instead of attending. Once per day. */
   sendDashboardReport: () => void;
+  /** Stage 5+: spend Visibility to fake ExecConf. Once per day. Crashes back tomorrow. */
+  cookTheBooks: () => void;
   openConversation: (id: string) => void;
   closeConversation: () => void;
   replyInConversation: (id: string, replyIdx: number) => void;
@@ -578,6 +600,9 @@ export const useGame = create<GameState>()(
       chaosPassedToBoss: 0,
       prDisasterStrikes: 0,
       boardSyncResult: null,
+      illusionSpentToday: false,
+      illusionDebt: 0,
+      promotionResult: null,
       conversations: [],
       messages: {},
       openConversationId: null,
@@ -703,6 +728,42 @@ export const useGame = create<GameState>()(
           const stillPending = pendingRequestsFor(s1.day, s1.acceptedRequestIds, s1.schedule, s1.carryoverRequests);
           const nextApprovals = tickApprovalsOnce(stillPending, s1.requestApprovals, s1.stakeholders);
           set({ requestApprovals: nextApprovals });
+        }
+
+        // Stage 5: every real accept spawns a 30-min Follow-up Committee on
+        // the calendar (if there's room). Skip when the accept itself was a
+        // committee, shield, or chaos artifact, so we don't recurse.
+        if (s1.stage >= 5 && !req.typeId.startsWith('committee') && req.typeId !== 'shield-meeting' && req.typeId !== 'legacy-meeting') {
+          const committeeType = MEETING_TYPES['committee'];
+          const committeeStart = findFreeSlot(s1.schedule, committeeType.durationMin);
+          if (committeeStart >= 0) {
+            const cuid = `committee-${Date.now()}-${req.uid}`;
+            set({
+              schedule: [
+                ...s1.schedule,
+                {
+                  uid: cuid,
+                  typeId: 'committee' as MeetingTypeId,
+                  startMinutes: committeeStart,
+                  from: 'Auto-spawned',
+                  committee: true,
+                },
+              ],
+              activityToday: logActivity(s1.activityToday, {
+                kind: 'meeting-scheduled',
+                title: `Follow-up committee chartered`,
+                detail: `Spawned by ${type.title}. ${committeeType.durationMin}m.`,
+                from: 'Acme',
+              }),
+            });
+            // Notify #general — the committee is the joke.
+            const s2 = get();
+            const { conversations: c3, messages: m3 } = applyChatEvent(
+              s2.conversations, s2.messages,
+              { type: 'committee-spawned', parentTypeId: req.typeId as MeetingTypeId },
+            );
+            set({ conversations: c3, messages: m3 });
+          }
         }
 
         const afterCount = beforeCount + 1;
@@ -856,6 +917,8 @@ export const useGame = create<GameState>()(
 
       removeScheduled: (uid) => {
         const removed = get().schedule.find((m) => m.uid === uid);
+        // Stage 5 legacy meetings cannot be removed. The joke is in the name.
+        if (removed?.legacy) return;
         set((s) => ({
           schedule: s.schedule.filter((m) => m.uid !== uid),
           acceptedRequestIds: s.acceptedRequestIds.filter(
@@ -1161,6 +1224,44 @@ export const useGame = create<GameState>()(
         });
       },
 
+      cookTheBooks: () => {
+        const s = get();
+        if (s.stage < 5) return;
+        if (s.illusionSpentToday) return;
+
+        // Per plan: spend 20 Visibility to fake +10 ExecConf for the day.
+        // Tomorrow's day-end applies -15 ExecConf debt. The math is a long-
+        // run loss, which is the joke. Short-run optics win is the temptation.
+        const delta: KpiDelta = { visibility: -20, executiveConfidence: +10 };
+
+        const { conversations: convos2, messages: msgs2 } = applyChatEvent(
+          s.conversations,
+          s.messages,
+          { type: 'illusion-spent' },
+        );
+
+        set({
+          kpis: applyDelta(s.kpis, delta),
+          illusionSpentToday: true,
+          illusionDebt: 15,
+          activityToday: logActivity(s.activityToday, {
+            kind: 'ping-replied',
+            title: 'Cooked the books',
+            detail: 'Inflated ExecConf for the day. The crash comes tomorrow.',
+            from: 'You',
+          }),
+          conversations: convos2,
+          messages: msgs2,
+          toast: {
+            id: `toast-${Date.now()}-cook`,
+            title: 'Cooked · The Books',
+            intent: 'warning',
+            icon: 'sparkle',
+            kpiDelta: delta,
+          },
+        });
+      },
+
       endDay: () => {
         const s = get();
         const sched = s.schedule;
@@ -1268,8 +1369,29 @@ export const useGame = create<GameState>()(
           if (!passed) boardSyncFailed = true;
         }
 
+        // ── Stage 5 Day 25 Promotion evaluation ──
+        // 5 of 5 = promoted (VP). 3-4 = lateral move ("congrats... kind of").
+        // <=2 = PIP game-over. Routes to 'promotion' screen on continue.
+        let promotionResult = s.promotionResult;
+        let pipFailed = false;
+        if (s.stage === 5 && s.day === STAGE5_LAST_DAY) {
+          const goals = STAGE5_GOALS;
+          const hit = goals.filter((g) => {
+            const v = g.kpi
+              ? nextKpis[g.kpi]
+              : g.stakeholderId
+              ? s.stakeholders.find((x) => x.id === g.stakeholderId)?.relationship ?? 0
+              : 0;
+            return g.lowerIsBetter ? v <= g.target : v >= g.target;
+          }).length;
+          const outcome: 'promoted' | 'lateral' | 'pip' =
+            hit >= 5 ? 'promoted' : hit >= 3 ? 'lateral' : 'pip';
+          promotionResult = { goalsMet: hit, goalsTotal: goals.length, outcome };
+          if (outcome === 'pip') pipFailed = true;
+        }
+
         const prStrikesNext = prFiredThisEndDay ? s.prDisasterStrikes + 1 : s.prDisasterStrikes;
-        const over = checkGameOver(nextKpis, s.stakeholders, s.stage, prStrikesNext, boardSyncFailed);
+        const over = checkGameOver(nextKpis, s.stakeholders, s.stage, prStrikesNext, boardSyncFailed, pipFailed);
 
         // Fire post-meeting messages in each meeting chat.
         let convos2 = s.conversations;
@@ -1280,6 +1402,23 @@ export const useGame = create<GameState>()(
           msgs2,
           Date.now(),
         ));
+        // Stage 5 AI Notes Bot — fires once per held non-chaos meeting in
+        // #general. Each fire grants +1 Visibility, -1 Morale (already
+        // folded into the schedule's meeting-held templates, but we also
+        // emit the chat event so the bot's voice is heard).
+        if (s.stage >= 5) {
+          const typesHeld = new Set<MeetingTypeId>();
+          for (const m of sched) {
+            if (m.uid.startsWith('chaos-')) continue;
+            typesHeld.add(m.typeId);
+          }
+          for (const tid of typesHeld) {
+            ({ conversations: convos2, messages: msgs2 } = applyChatEvent(
+              convos2, msgs2,
+              { type: 'ai-notes-fired', meetingTypeId: tid },
+            ));
+          }
+        }
         // Fire end-of-day sentiment reactions in group channels.
         ({ conversations: convos2, messages: msgs2 } = applyChatEvent(
           convos2, msgs2,
@@ -1312,16 +1451,27 @@ export const useGame = create<GameState>()(
           messages: msgs2,
           prDisasterStrikes: prStrikesNext,
           boardSyncResult,
+          promotionResult,
         });
         return result;
       },
 
       continueToNextDay: () => {
         const s = get();
+        // Stage 5 Day 25 → if a promotion result was set at end of day, route
+        // to the Promotion screen instead of rolling forward. (PIP outcome
+        // already routes to GameOver via the gameOver state.)
+        if (s.stage === 5 && s.day >= STAGE5_LAST_DAY && s.promotionResult) {
+          set({ screen: 'promotion' });
+          return;
+        }
         const finishedStage1 = s.stage === 1 && s.day >= STAGE1_LAST_DAY;
         const finishedStage2 = s.stage === 2 && s.day >= STAGE2_LAST_DAY;
         const finishedStage3 = s.stage === 3 && s.day >= STAGE3_LAST_DAY;
         const finishedStage4 = s.stage === 4 && s.day >= STAGE4_LAST_DAY;
+        // Stage 5 doesn't advance — Day 25 ends with the Promotion screen.
+        // continueToNextDay shouldn't be reachable past Stage 5 Day 25 in
+        // normal play (the Day 25 day-summary routes to 'promotion').
         const nextStage: 1 | 2 | 3 | 4 | 5 = finishedStage1
           ? 2
           : finishedStage2
@@ -1400,6 +1550,44 @@ export const useGame = create<GameState>()(
           };
         }
 
+        // ── Stage 5 Legacy Meeting auto-spawn ──
+        // Every Stage 5 day, one Legacy Sync gets dropped on the calendar.
+        // Player can't decline or remove it. The carryover schedule (above)
+        // is recurringCarry — we append the legacy meeting onto it.
+        let scheduleSeed = recurringCarry;
+        let scheduleSeedActivity: ActivityEntry[] = [];
+        if (nextStage === 5) {
+          const legacyType = MEETING_TYPES['legacy-meeting'];
+          const start = findFreeSlot(scheduleSeed, legacyType.durationMin);
+          if (start >= 0) {
+            const luid = `legacy-d${nextDay}-${Math.random().toString(36).slice(2, 7)}`;
+            scheduleSeed = [
+              ...scheduleSeed,
+              {
+                uid: luid,
+                typeId: 'legacy-meeting' as MeetingTypeId,
+                startMinutes: start,
+                from: 'Acme (legacy)',
+                legacy: true,
+              },
+            ];
+            scheduleSeedActivity = [
+              {
+                id: `legacy-${Date.now()}`,
+                ts: Date.now(),
+                kind: 'meeting-scheduled' as const,
+                title: 'Legacy Sync added',
+                detail: 'Inherited from "before your time". Cannot be removed.',
+                from: 'Acme',
+              },
+            ];
+            // Fire #general reaction.
+            const fx = applyChatEvent(convos, msgs, { type: 'legacy-spawned' });
+            convos = fx.conversations;
+            msgs = fx.messages;
+          }
+        }
+
         // ── Stage 3 approval-chain carryover ───────────────────────────────
         // Approval-gated requests from previous days that weren't actioned
         // follow the player into the next day. On stage transitions, the
@@ -1424,12 +1612,19 @@ export const useGame = create<GameState>()(
           );
         }
 
+        // Stage 5 illusion debt — apply yesterday's "Cook the Books" hangover.
+        const debt = s.illusionDebt ?? 0;
+        const debtedKpis = debt > 0
+          ? applyDelta(s.kpis, { executiveConfidence: -debt })
+          : s.kpis;
+
         set({
           day: nextDay,
           stage: nextStage,
           stageUnlocked,
-          schedule: recurringCarry,
+          schedule: scheduleSeed,
           acceptedRequestIds: recurringAcceptedIds,
+          kpis: debtedKpis,
           lastResult: null,
           screen: 'calendar',
           activeChaos: nextActiveChaos,
@@ -1448,16 +1643,25 @@ export const useGame = create<GameState>()(
           // Stage 4 ledger — PR strikes reset on stage exit, Board Sync clears too.
           prDisasterStrikes: stageChanged ? 0 : s.prDisasterStrikes,
           boardSyncResult: stageChanged ? null : s.boardSyncResult,
-          activityToday: recurringCarry.length
-            ? recurringCarry.map((m, i) => ({
-                id: `dayseed-${Date.now()}-${i}`,
-                ts: Date.now() - 1000 * (recurringCarry.length - i),
-                kind: 'meeting-scheduled' as const,
-                title: `Recurring: ${MEETING_TYPES[m.typeId].title}`,
-                detail: `Carried over from yesterday`,
-                from: m.from,
-              }))
-            : [],
+          // Stage 5 ledger — reset daily flags, clear consumed debt, reset
+          // promotion result on stage transition (shouldn't happen from S5
+          // but defensive).
+          illusionSpentToday: false,
+          illusionDebt: 0,
+          promotionResult: stageChanged ? null : s.promotionResult,
+          activityToday: [
+            ...scheduleSeedActivity,
+            ...(recurringCarry.length
+              ? recurringCarry.map((m, i) => ({
+                  id: `dayseed-${Date.now()}-${i}`,
+                  ts: Date.now() - 1000 * (recurringCarry.length - i),
+                  kind: 'meeting-scheduled' as const,
+                  title: `Recurring: ${MEETING_TYPES[m.typeId].title}`,
+                  detail: `Carried over from yesterday`,
+                  from: m.from,
+                }))
+              : []),
+          ],
           detailUid: null,
           conversations: convos,
           messages: msgs,
@@ -1527,9 +1731,12 @@ export const useGame = create<GameState>()(
     }),
     {
       name: 'meeting-tycoon-save',
-      // Bumped to add the 'landing' FlowScreen as default for first-time
-      // visitors so the landing page shows before the onboarding flow.
-      version: 13,
+      // Bumped for Stage 5: new state fields (illusionSpentToday, illusionDebt,
+      // promotionResult), new MeetingTypes (committee, legacy-meeting), new
+      // game-over reason (performance-improvement-plan), new chaos events
+      // (committee-spawn, ai-takeover, cfo-illusion-audit), new 'promotion'
+      // FlowScreen. Old saves wipe.
+      version: 14,
       migrate: () => undefined,
     },
   ),
@@ -1641,4 +1848,4 @@ function pickBossFeedback(
   };
 }
 
-export { STARTING_KPIS, applyDelta, STAGE1_LAST_DAY, STAGE2_LAST_DAY, STAGE3_LAST_DAY, STAGE4_LAST_DAY, DAILY_ACCEPT_CAP };
+export { STARTING_KPIS, applyDelta, STAGE1_LAST_DAY, STAGE2_LAST_DAY, STAGE3_LAST_DAY, STAGE4_LAST_DAY, STAGE5_LAST_DAY, DAILY_ACCEPT_CAP };

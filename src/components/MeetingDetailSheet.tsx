@@ -125,15 +125,31 @@ export function MeetingDetailSheet() {
                 <button onClick={closeDetail} className="pf-btn-ghost flex-1">
                   Keep on calendar
                 </button>
-                <button
-                  onClick={() => removeScheduled(meeting.uid)}
-                  className="pf-btn-secondary flex-1 !text-rose-700 !bg-rose-50 hover:!bg-rose-100 !border-rose-100"
-                >
-                  <Icon name="x" size={14} />
-                  Remove
-                </button>
+                {meeting.legacy ? (
+                  <button
+                    disabled
+                    className="pf-btn-secondary flex-1 !opacity-50 !cursor-not-allowed"
+                    title="Legacy meetings cannot be removed."
+                  >
+                    <Icon name="x" size={14} />
+                    Cannot remove
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => removeScheduled(meeting.uid)}
+                    className="pf-btn-secondary flex-1 !text-rose-700 !bg-rose-50 hover:!bg-rose-100 !border-rose-100"
+                  >
+                    <Icon name="x" size={14} />
+                    Remove
+                  </button>
+                )}
               </div>
-              {meeting.recurring && (
+              {meeting.legacy && (
+                <p className="mt-2 text-[10.5px] text-ink-400 text-center italic">
+                  Inherited from "before your time". Predates the calendar system itself.
+                </p>
+              )}
+              {meeting.recurring && !meeting.legacy && (
                 <p className="mt-2 text-[10.5px] text-ink-400 text-center">
                   Removing also stops this from recurring tomorrow.
                 </p>

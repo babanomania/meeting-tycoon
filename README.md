@@ -71,10 +71,10 @@ more numbers.
 | **2** | 6–10 | Welcome to Reality | 8 requests/day, cap drops to 4, Shield Meeting + Dashboard Report unlock, one forced Reorg |
 | **3** | 11–15 | Bureaucracy | Approval chains (3 of 5 sign-offs), Pass-to-Boss chaos option, Politics ×1.5, Process Paralysis failure |
 | **4** | 16–20 | Corporate Madness | Stakeholder alliances (+3 KPI), feuds (−3 alignment), PR Disaster auto-fire, Politics ×1.75, Day 20 Board Sync climax |
-| **5** | 21–25 | Executive Absurdity | Mandatory committees, AI Notes Bot, the Executive Dashboard illusion *(in design)* |
+| **5** | 21–25 | Executive Absurdity | Mandatory committees auto-spawn on every accept, AI Notes Bot floods #general, Legacy Meetings you can't remove, "Cook the Books" (−Visibility for +ExecConf with a next-day crash), Day 25 Promotion (5/5 = VP, 3–4 = lateral, ≤2 = PIP) |
 
-Stages 1–4 are fully playable today. Stage 5 has a complete design doc and
-ships in a subsequent build session. See
+All 5 stages are fully playable today — full 25-day arc from Day 1 to the
+Day 25 Promotion (or PIP, or lateral move). See
 `docs/gameplay-plan.md`-style notes referenced in the project plan for the
 full spec.
 
@@ -178,7 +178,7 @@ all pick it up automatically.
 
 ## Status
 
-Stage 1 ✅ · Stage 2 ✅ · Stage 3 ✅ · Stage 4 ✅ · Stage 5 designed, not yet built.
+Stage 1 ✅ · Stage 2 ✅ · Stage 3 ✅ · Stage 4 ✅ · Stage 5 ✅ — full 25-day arc complete.
 
 No tests yet — gameplay is iterated through playthroughs. The build is the
 test plan: typecheck (`npm run typecheck`) and production build

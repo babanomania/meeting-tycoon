@@ -228,6 +228,28 @@ export const MEETING_TYPES: Record<string, MeetingType> = {
     impact: { visibility: +4, alignment: -6, morale: -8, executiveConfidence: -3, burnout: +5 },
     flavor: 'New boxes on the org chart. Same people inside them. Maybe.',
   },
+
+  // ── Stage 5 mechanics ──────────────────────────────────────────────────────
+  'committee': {
+    id: 'committee',
+    title: 'Follow-up Committee',
+    durationMin: 30,
+    attendees: 5,
+    priority: 'recurring',
+    emoji: '🪑',
+    impact: { alignment: +2, productivity: -2, burnout: +1 },
+    flavor: 'A committee about the meeting you just had. There will be a sub-committee.',
+  },
+  'legacy-meeting': {
+    id: 'legacy-meeting',
+    title: 'Legacy Sync (Inherited)',
+    durationMin: 45,
+    attendees: 6,
+    priority: 'recurring',
+    emoji: '🏛️',
+    impact: { alignment: +1, productivity: -4, morale: -2, burnout: +2 },
+    flavor: 'This meeting predates you. Nobody knows what it is for. It is still on the calendar.',
+  },
 };
 
 /**
@@ -448,6 +470,62 @@ export const REQUEST_POOL: Record<number, MeetingRequest[]> = {
     { uid: 'd20-r7', typeId: 'town-hall', from: 'CEO', note: 'Post-Board town hall. "We are aligned."' },
     { uid: 'd20-r8', typeId: 'retro', from: 'Product', note: 'Stage retro. Reflect on the bureaucracy you endured.' },
   ],
+
+  // ── Stage 5 (Days 21-25) — Executive Absurdity. Every accept spawns a
+  //    committee. A Legacy Sync appears at day-start. Acme AI Notes Bot
+  //    floods #general. You spend Visibility to fake KPIs. Day 25 = Promotion.
+  21: [
+    { uid: 'd21-r1', typeId: 'standup', from: 'Engineering', note: 'Monday. Stage 5. Standup energy: tactical compliance.' },
+    { uid: 'd21-r2', typeId: 'strategy-offsite', from: 'Leadership', note: 'Post-Board strategy "refinement". Three rounds expected.' },
+    { uid: 'd21-r3', typeId: 'okr-checkin', from: 'VP Strategy', note: 'BROs are now OKR-Rs-R ("OKRs Reimagined-Refined").' },
+    { uid: 'd21-r4', typeId: 'board-pre-read', from: 'CFO', note: 'Next Board cycle starts now. Diana never stops.' },
+    { uid: 'd21-r5', typeId: 'culture-sync', from: 'HR', note: 'Survey re-run with "improved questions".' },
+    { uid: 'd21-r6', typeId: 'quarterly-review', from: 'CEO', note: 'Quarter-after-the-quarter review.' },
+    { uid: 'd21-r7', typeId: 'town-hall', from: 'CEO', note: 'Marcus has a new strategic narrative.' },
+    { uid: 'd21-r8', typeId: '1on1', from: 'Your Boss', note: 'David wants a vibe check. (It is not a vibe check.)' },
+  ],
+  22: [
+    { uid: 'd22-r1', typeId: 'standup', from: 'Engineering', note: 'Tuesday. The bot started replying to humans.' },
+    { uid: 'd22-r2', typeId: 'design-review', from: 'Design', note: 'AI Notes Bot now has its own design language.' },
+    { uid: 'd22-r3', typeId: 'project-kickoff', from: 'Product', note: 'AI-native everything kickoff. Mandatory enthusiasm.' },
+    { uid: 'd22-r4', typeId: 'okr-checkin', from: 'VP Strategy', note: 'Tom drafted "stretch BROs" (sBROs).' },
+    { uid: 'd22-r5', typeId: 'eng-escalation', from: 'CTO', note: 'Raj wants the bot disabled. Diana wants it expanded.' },
+    { uid: 'd22-r6', typeId: 'budget-review', from: 'CFO', note: 'Headcount conversation moved to "talent rebalancing".' },
+    { uid: 'd22-r7', typeId: 'culture-sync', from: 'HR', note: 'Bot retention metrics now part of People Ops.' },
+    { uid: 'd22-r8', typeId: 'all-hands', from: 'CEO', note: 'Marcus is announcing something about AI. Probably.' },
+  ],
+  23: [
+    { uid: 'd23-r1', typeId: 'standup', from: 'Engineering', note: 'Wednesday. Standup attended by 4 humans, 2 bots.' },
+    { uid: 'd23-r2', typeId: 'quarterly-review', from: 'CEO', note: 'QBR.5 — the half-quarter check.',
+      approvers: ['ceo', 'cfo', 'vp_strategy', 'cto', 'boss'], requiresApprovals: 3 },
+    { uid: 'd23-r3', typeId: 'pr-cleanup', from: 'Legal', note: 'The bot tweeted. Lawyers retainer increased.' },
+    { uid: 'd23-r4', typeId: 'retro', from: 'Engineering', note: 'Retro about retros about AI summaries of retros.' },
+    { uid: 'd23-r5', typeId: 'board-pre-read', from: 'CFO', note: 'Pre-read for the next pre-read cycle.' },
+    { uid: 'd23-r6', typeId: 'town-hall', from: 'CEO', note: 'Mid-stage rally. Marcus brought a new metaphor.' },
+    { uid: 'd23-r7', typeId: 'stakeholder-sync', from: 'Marketing', note: 'Brand narrative around AI Notes Bot.' },
+    { uid: 'd23-r8', typeId: 'strategy-offsite', from: 'Leadership', note: 'Off-site about AI-native synergy.' },
+  ],
+  24: [
+    { uid: 'd24-r1', typeId: 'standup', from: 'Engineering', note: 'Thursday. Dev S. is hiding from the bot.' },
+    { uid: 'd24-r2', typeId: 'project-kickoff', from: 'Product', note: 'New initiative: "Bot Reduction Working Group".' },
+    { uid: 'd24-r3', typeId: 'budget-review', from: 'CFO', note: 'Final pre-Promotion review. Diana has notes.',
+      approvers: ['cfo', 'ceo', 'boss', 'vp_strategy', 'cto'], requiresApprovals: 3 },
+    { uid: 'd24-r4', typeId: '1on1', from: 'Your Boss', note: 'David wants a pre-Promotion sync. Says "no pressure".' },
+    { uid: 'd24-r5', typeId: 'okr-checkin', from: 'VP Strategy', note: 'sBROs evaluation. Subjective by design.' },
+    { uid: 'd24-r6', typeId: 'culture-sync', from: 'HR', note: 'Pre-Promotion vibes audit.' },
+    { uid: 'd24-r7', typeId: 'eng-escalation', from: 'CTO', note: 'Raj filed paperwork to remove "AI" from his title.' },
+    { uid: 'd24-r8', typeId: 'town-hall', from: 'CEO', note: 'Pre-Promotion address. Cameras on.' },
+  ],
+  25: [
+    { uid: 'd25-r1', typeId: 'standup', from: 'Engineering', note: 'Friday. Promotion day. Standup ran 4 minutes.' },
+    { uid: 'd25-r2', typeId: 'all-hands', from: 'CEO', note: 'Marcus is "making an announcement". You may be in it.' },
+    { uid: 'd25-r3', typeId: 'quarterly-review', from: 'CFO', note: 'Final QBR. Diana wrote the speech for you.' },
+    { uid: 'd25-r4', typeId: 'pr-cleanup', from: 'Legal', note: 'Promotion press strategy. Even if you do not get it.' },
+    { uid: 'd25-r5', typeId: 'town-hall', from: 'CEO', note: 'Promotion ceremony town hall. Or "transition" town hall.' },
+    { uid: 'd25-r6', typeId: 'culture-sync', from: 'HR', note: 'Post-Promotion vibes. Bring tissues.' },
+    { uid: 'd25-r7', typeId: '1on1', from: 'Your Boss', note: 'David has news. He looks like he has news.' },
+    { uid: 'd25-r8', typeId: 'retro', from: 'Engineering', note: 'The stage retro. The arc retro. The everything retro.' },
+  ],
 };
 
 export function requestsForDay(day: number): MeetingRequest[] {
@@ -660,6 +738,44 @@ export const CHAOS_EVENTS: ChaosEvent[] = [
     delegateImpact: { executiveConfidence: -25, visibility: -10, alignment: -8, morale: -4 },
     rescheduleImpact: { executiveConfidence: -40, visibility: -15, alignment: -10, morale: -2 },
   },
+
+  // ── Stage 5 chaos events ────────────────────────────────────────────────
+  {
+    id: 'committee-spawn',
+    emoji: '🪑',
+    title: 'The Q3 Synergy Sub-Committee Wants You',
+    fromWho: 'A committee',
+    durationMin: 60,
+    attendees: '7 mandatory leads',
+    flavor: 'Nobody remembers chartering this committee. It now reports to two VPs. You are on it.',
+    attendImpact: { alignment: +5, visibility: +3, productivity: -8, burnout: +4 },
+    delegateImpact: { alignment: -3, visibility: -2, executiveConfidence: -3 },
+    rescheduleImpact: { alignment: -6, visibility: -4, morale: +2 },
+  },
+  {
+    id: 'ai-takeover',
+    emoji: '🤖',
+    title: 'The Notes Bot Is Replying to Humans',
+    fromWho: 'Acme AI Notes Bot',
+    durationMin: 30,
+    attendees: '#general, increasingly confused',
+    flavor: 'Pat L. asked the bot a question. The bot answered. Pat L. liked the answer.',
+    attendImpact: { visibility: +6, morale: -4, executiveConfidence: +4, productivity: -3 },
+    delegateImpact: { morale: +3, visibility: -2, executiveConfidence: -3 },
+    rescheduleImpact: { morale: +4, visibility: -3, alignment: -2 },
+  },
+  {
+    id: 'cfo-illusion-audit',
+    emoji: '🔍',
+    title: 'Diana Is Auditing Your Numbers',
+    fromWho: 'CFO',
+    durationMin: 60,
+    attendees: 'You, Diana, your reported KPIs',
+    flavor: '"These dashboards do not reconcile with reality. Walk me through the methodology."',
+    attendImpact: { executiveConfidence: +4, alignment: +2, productivity: -8, morale: -3, burnout: +5 },
+    delegateImpact: { executiveConfidence: -12, alignment: -4, visibility: -3 },
+    rescheduleImpact: { executiveConfidence: -18, alignment: -6, visibility: -4 },
+  },
 ];
 
 /** Stage 1 quarterly goals — visible on Overview as progress bars. */
@@ -716,8 +832,23 @@ export const STAGE4_GOALS: QuarterlyGoal[] = [
   { id: 'g4-burnout',  label: "Don't Implode",          kpi: 'burnout',        emoji: '🔥', target: 75, lowerIsBetter: true },
 ];
 
+/**
+ * Stage 5 quarterly goals — the Promotion check. Hitting all 5 by Day 25
+ * promotes you to VP; 3-4 = lateral move; <=2 = PIP. CFO and CEO are the
+ * two real gates per the plan ("CFO sees through the illusion if hostile;
+ * Marcus writes the promotion letter").
+ */
+export const STAGE5_GOALS: QuarterlyGoal[] = [
+  { id: 'g5-ceo',      label: 'CEO Writes the Letter',  stakeholderId: 'ceo',  emoji: '👔', target: 70 },
+  { id: 'g5-cfo',      label: 'CFO Signs Off',          stakeholderId: 'cfo',  emoji: '🧾', target: 60 },
+  { id: 'g5-visibility', label: 'Maintain the Illusion', kpi: 'visibility',    emoji: '👁️', target: 75 },
+  { id: 'g5-execconf', label: 'Boardroom-Ready',        kpi: 'executiveConfidence', emoji: '🏛️', target: 70 },
+  { id: 'g5-burnout',  label: 'Survive Yourself',       kpi: 'burnout',        emoji: '🔥', target: 80, lowerIsBetter: true },
+];
+
 /** Stage → quarterly goal set. Falls back to Stage 1 for stages not built yet. */
 export function stageGoalsFor(stage: StageId): QuarterlyGoal[] {
+  if (stage === 5) return STAGE5_GOALS;
   if (stage === 4) return STAGE4_GOALS;
   if (stage === 3) return STAGE3_GOALS;
   if (stage === 2) return STAGE2_GOALS;
