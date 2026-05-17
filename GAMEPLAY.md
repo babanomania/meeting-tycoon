@@ -52,6 +52,23 @@ You have **25 in-game days** (5 stages × 5 days). Each day plays in about
 
 In between: 8 thematic ways to fail.
 
+The whole thing runs in a browser. On phones it's edge-to-edge; on
+laptops it renders inside a PhoneFrame mockup so the simulation always
+feels handheld.
+
+<table>
+<tr>
+<td width="40%" align="center">
+  <img src="docs/assets/screenshots/01-landing-mobile.png" alt="Landing page on mobile — Meeting Tycoon headline, Launch the game CTA, the calendar-card hero illustration" width="280"><br>
+  <sub><b>Landing — mobile.</b> White Fluent surface, big "holds a grudge" headline, edge-to-edge CTA.</sub>
+</td>
+<td width="60%" align="center">
+  <img src="docs/assets/screenshots/01-landing-desktop.png" alt="Landing page on desktop — wider layout with the full hero banner showing the full corporate calendar week" width="520"><br>
+  <sub><b>Landing — desktop.</b> Same content, wider grid, the full week-view hero banner visible.</sub>
+</td>
+</tr>
+</table>
+
 ---
 
 ## Onboarding
@@ -477,11 +494,19 @@ a stats card summarizing the 25-day run.
   <sub><b>A failure ending</b> — the "Restructured" screen with HR's lateral-move letter and the final 6-KPI snapshot showing how the run ended.</sub>
 </td>
 <td width="50%" align="center">
-  <img src="docs/assets/screenshots/41-promotion-won.png" alt="Promotion screen — You've been promoted — with confetti, David Chen's letter, and the 25-day stats" width="320"><br>
+  <img src="docs/assets/screenshots/41-promotion-won.png" alt="Promotion screen on mobile — You've been promoted — with confetti, David Chen's letter, and the 25-day stats" width="320"><br>
   <sub><b>The win condition.</b> Confetti, "You've been promoted." Day 25 / 5/5 goals hit / OUTCOME: PROMOTED. David writes the congrats letter himself.</sub>
 </td>
 </tr>
 </table>
+
+The Promotion screen renders full-bleed outside the PhoneFrame, so on
+desktop it gets the full canvas with confetti falling across the whole
+viewport:
+
+<p align="center">
+  <img src="docs/assets/screenshots/41-promotion-won-desktop.png" alt="Promotion screen on desktop — the same win screen rendered inside the desktop PhoneFrame mockup with brand-purple gradient surroundings" width="640">
+</p>
 
 ---
 
