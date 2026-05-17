@@ -76,8 +76,8 @@ export function Landing() {
           transition={{ delay: 0.1, duration: 0.5 }}
           className="text-4xl sm:text-5xl md:text-6xl xl:text-[68px] font-extrabold leading-[1.02] tracking-tight max-w-4xl"
         >
-          The first management sim that{' '}
-          <span className="text-brand-600">holds a grudge</span>.
+          A management {' '}<span className="text-brand-600">simulator</span>{' '} about surviving modern {' '}
+          <span className="text-brand-600">work culture</span>.
         </motion.h1>
 
         <motion.p

@@ -47,14 +47,6 @@ export function App() {
     else if (stageUnlocked && !gameOver && screen !== 'stage-unlock') setScreen('stage-unlock');
   }, [gameOver, stageUnlocked, screen, setScreen]);
 
-  // Landing page lives OUTSIDE the PhoneFrame — it's a full-width marketing
-  // surface, not a phone screen. First-time visitors land here.
-  if (screen === 'landing') return <Landing />;
-
-  // The end-of-game Promotion screen is also full-width — the celebration
-  // doesn't fit in a 400×860 frame, and it deserves the full canvas.
-  if (screen === 'promotion') return <Promotion />;
-
   const inboxCount = useMemo(
     () => pendingRequestsFor(day, accepted, schedule).length,
     [day, accepted, schedule],
@@ -68,6 +60,14 @@ export function App() {
     }
     return n;
   }, [conversations, readIds]);
+
+  // Landing page lives OUTSIDE the PhoneFrame — it's a full-width marketing
+  // surface, not a phone screen. First-time visitors land here.
+  if (screen === 'landing') return <Landing />;
+
+  // The end-of-game Promotion screen is also full-width — the celebration
+  // doesn't fit in a 400×860 frame, and it deserves the full canvas.
+  if (screen === 'promotion') return <Promotion />;
 
   const showBottomNav = NAV_SCREENS.has(screen);
 
