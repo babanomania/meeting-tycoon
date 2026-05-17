@@ -25,7 +25,7 @@ const OUT_DIR = resolve(__dirname, '..', 'docs', 'assets', 'screenshots');
 const URL = process.env.PREVIEW_URL ?? 'http://localhost:5173/';
 
 const MOBILE = { width: 390, height: 844 };
-const DESKTOP = { width: 1280, height: 900 };
+// Game is mobile-first; screenshots are mobile-only by design.
 
 // ──────────────────────────────────────────────────────────────────────────
 // Reusable state fragments — keep individual scenes terse and consistent.
@@ -96,13 +96,6 @@ const SCENES = [
     seedChat: false,
     state: { screen: 'landing', stage: 1, day: 1, schedule: [], conversations: [], history: [] },
     wait: 700,
-  },
-  {
-    name: '01-landing-desktop',
-    viewport: DESKTOP,
-    seedChat: false,
-    state: { screen: 'landing', stage: 1, day: 1, schedule: [], conversations: [], history: [] },
-    wait: 800,
   },
   {
     name: '02-onboarding',
@@ -326,18 +319,6 @@ const SCENES = [
       promotionResult: { goalsMet: 5, goalsTotal: 5, outcome: 'promoted' },
     },
     // Long wait so the confetti animation has fallen visibly into frame.
-    wait: 2200,
-  },
-  {
-    name: '41-promotion-won-desktop',
-    viewport: DESKTOP,
-    seedChat: true,
-    state: {
-      screen: 'promotion', stage: 5, day: 25,
-      stakeholders: STAKEHOLDERS_ALLIED,
-      kpis: { productivity: 72, morale: 78, burnout: 38, alignment: 80, executiveConfidence: 82, visibility: 84 },
-      promotionResult: { goalsMet: 5, goalsTotal: 5, outcome: 'promoted' },
-    },
     wait: 2200,
   },
 ];
