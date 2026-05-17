@@ -187,7 +187,13 @@ export type ChatEvent =
   | { type: 'dashboard-sent' }       // player sent a dashboard report instead of attending
   // ── Stage 3 events ──
   | { type: 'approval-cleared'; meetingTypeId: MeetingTypeId }   // approval chain unlocked a request
-  | { type: 'passed-to-boss'; chaosId: string };                 // player punted a chaos upward
+  | { type: 'passed-to-boss'; chaosId: string }                  // player punted a chaos upward
+  // ── Stage 4 events ──
+  | { type: 'alliance-formed'; pair: [StakeholderId, StakeholderId] }
+  | { type: 'feud-detected'; pair: [StakeholderId, StakeholderId] }
+  | { type: 'pr-disaster-fired' }
+  | { type: 'board-sync-passed'; goalsMet: number; goalsTotal: number }
+  | { type: 'board-sync-failed'; goalsMet: number; goalsTotal: number };
 
 export type ActivityKind =
   | 'meeting-scheduled'
@@ -255,7 +261,9 @@ export type GameOverReason =
   | 'fired-low-confidence'
   | 'burnout-sabbatical'
   | 'restructured'
-  | 'process-paralysis';
+  | 'process-paralysis'
+  | 'board-confidence-lost'
+  | 'pr-disaster-reassigned';
 
 export interface GameOver {
   reason: GameOverReason;

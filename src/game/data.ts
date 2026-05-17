@@ -389,6 +389,65 @@ export const REQUEST_POOL: Record<number, MeetingRequest[]> = {
     { uid: 'd15-r7', typeId: 'town-hall', from: 'CEO', note: 'Quarterly close. Marcus prepared remarks.' },
     { uid: 'd15-r8', typeId: 'culture-sync', from: 'HR', note: 'End-of-week vibes. Optional but observed.' },
   ],
+
+  // ── Stage 4 (Days 16-20) — Corporate Madness. The org chart eats itself.
+  //    Boss + CEO under constant pressure (PR Disaster watching for both <50).
+  //    Day 20 = Board Sync climax. Approval chains continue. Alliances matter.
+  16: [
+    { uid: 'd16-r1', typeId: 'standup', from: 'Engineering', note: 'Monday. Riya is "exploring opportunities".' },
+    { uid: 'd16-r2', typeId: 'strategy-offsite', from: 'Leadership', note: 'Pre-Board strategy session. Approval chain attached.',
+      approvers: ['ceo', 'cfo', 'cto', 'vp_strategy', 'chro'], requiresApprovals: 3 },
+    { uid: 'd16-r3', typeId: 'board-pre-read', from: 'CFO', note: 'Board reads on Friday. Drafts due now.' },
+    { uid: 'd16-r4', typeId: 'eng-escalation', from: 'CTO', note: 'Raj wants a "feud-resolution meeting" with Tom.' },
+    { uid: 'd16-r5', typeId: 'okr-checkin', from: 'VP Strategy', note: 'Tom is preparing a slide for the board himself.' },
+    { uid: 'd16-r6', typeId: '1on1', from: 'Your Boss', note: 'David needs a candid sync. (It is never candid.)' },
+    { uid: 'd16-r7', typeId: 'pr-cleanup', from: 'Legal', note: 'CEO posted on LinkedIn again. Lawyers convening.' },
+    { uid: 'd16-r8', typeId: 'culture-sync', from: 'People Ops', note: 'Survey results trending "concerning".' },
+  ],
+  17: [
+    { uid: 'd17-r1', typeId: 'standup', from: 'Engineering', note: 'Tuesday. Half the team is in "interview prep" mode.' },
+    { uid: 'd17-r2', typeId: 'quarterly-review', from: 'CEO', note: 'Marcus wants a polished QBR for the board.',
+      approvers: ['ceo', 'cfo', 'vp_strategy', 'boss', 'cto'], requiresApprovals: 3 },
+    { uid: 'd17-r3', typeId: 'board-pre-read', from: 'CFO', note: 'Board materials v2. Diana flagged 14 items.' },
+    { uid: 'd17-r4', typeId: 'town-hall', from: 'CEO', note: 'Pre-Board "pulse". Cameras on.' },
+    { uid: 'd17-r5', typeId: 'design-review', from: 'Design', note: 'New board-deck visual identity. Three rounds in.' },
+    { uid: 'd17-r6', typeId: 'budget-review', from: 'CFO', note: 'Diana is asking about "the gap".' },
+    { uid: 'd17-r7', typeId: 'eng-escalation', from: 'CTO', note: 'Raj wants the no-meetings policy ratified.' },
+    { uid: 'd17-r8', typeId: 'stakeholder-sync', from: 'Marketing', note: 'Press strategy for the post-Board narrative.' },
+  ],
+  18: [
+    { uid: 'd18-r1', typeId: 'standup', from: 'Engineering', note: 'Wednesday. Marcus W. submitted resignation. (Reconsidered after lunch.)' },
+    { uid: 'd18-r2', typeId: 'project-kickoff', from: 'Product', note: 'Board-mandated "AI Initiative". Sign-offs in motion.',
+      approvers: ['ceo', 'cto', 'cfo', 'vp_strategy', 'boss'], requiresApprovals: 3 },
+    { uid: 'd18-r3', typeId: 'pr-cleanup', from: 'Legal', note: 'Pre-Board press statement drafting.' },
+    { uid: 'd18-r4', typeId: 'retro', from: 'Engineering', note: 'Mid-week retro about retros about retros.' },
+    { uid: 'd18-r5', typeId: 'board-pre-read', from: 'CFO', note: 'Final round. Diana sleeping in office.' },
+    { uid: 'd18-r6', typeId: 'culture-sync', from: 'HR', note: 'Wellness check ahead of Board scrutiny.' },
+    { uid: 'd18-r7', typeId: 'town-hall', from: 'CEO', note: 'Marcus wants energy rehearsed before Friday.' },
+    { uid: 'd18-r8', typeId: 'strategy-offsite', from: 'Leadership', note: 'Final pre-Board alignment. All hands on deck.',
+      approvers: ['ceo', 'cfo', 'cto', 'vp_strategy', 'chro'], requiresApprovals: 3 },
+  ],
+  19: [
+    { uid: 'd19-r1', typeId: 'standup', from: 'Engineering', note: 'Thursday. Standup is now async (by force, not choice).' },
+    { uid: 'd19-r2', typeId: 'board-pre-read', from: 'CFO', note: 'Last-minute corrections. Diana in command mode.' },
+    { uid: 'd19-r3', typeId: 'quarterly-review', from: 'CEO', note: 'Dry run of the Board QBR.' },
+    { uid: 'd19-r4', typeId: 'eng-escalation', from: 'CTO', note: 'Raj wants engineering excluded from Board scrutiny.' },
+    { uid: 'd19-r5', typeId: '1on1', from: 'Your Boss', note: 'David wants pre-Board reassurance. He sounds nervous.' },
+    { uid: 'd19-r6', typeId: 'pr-cleanup', from: 'Legal', note: 'Final press statement. Three lawyers, four opinions.' },
+    { uid: 'd19-r7', typeId: 'town-hall', from: 'CEO', note: 'Pre-Board pep talk. Mandatory smiling.' },
+    { uid: 'd19-r8', typeId: 'okr-checkin', from: 'VP Strategy', note: 'Tom rebranded KORs as "Board Reportable Outcomes" (BROs).' },
+  ],
+  20: [
+    { uid: 'd20-r1', typeId: 'standup', from: 'Engineering', note: 'Friday. Board day. Skeleton crew on standup.' },
+    { uid: 'd20-r2', typeId: 'all-hands', from: 'CEO', note: 'Pre-Board rally. Then radio silence until 4 PM.' },
+    { uid: 'd20-r3', typeId: 'board-pre-read', from: 'CFO', note: 'Final-final-FINAL revision. Diana is a ghost.' },
+    { uid: 'd20-r4', typeId: 'pr-cleanup', from: 'Legal', note: 'Post-Board press strategy. Cameras may be present.' },
+    { uid: 'd20-r5', typeId: 'culture-sync', from: 'HR', note: 'Post-Board "decompression" session. Pre-loaded with snacks.' },
+    { uid: 'd20-r6', typeId: 'quarterly-review', from: 'CEO', note: 'Post-Board recap with leadership.',
+      approvers: ['ceo', 'cfo', 'vp_strategy', 'boss', 'cto'], requiresApprovals: 3 },
+    { uid: 'd20-r7', typeId: 'town-hall', from: 'CEO', note: 'Post-Board town hall. "We are aligned."' },
+    { uid: 'd20-r8', typeId: 'retro', from: 'Product', note: 'Stage retro. Reflect on the bureaucracy you endured.' },
+  ],
 };
 
 export function requestsForDay(day: number): MeetingRequest[] {
@@ -532,6 +591,75 @@ export const CHAOS_EVENTS: ChaosEvent[] = [
     delegateImpact: { visibility: -3, alignment: -2, executiveConfidence: -4 },
     rescheduleImpact: { visibility: -6, executiveConfidence: -8, alignment: -3 },
   },
+
+  // ── Stage 4 chaos events ────────────────────────────────────────────────
+  {
+    id: 'backchannel-cfo',
+    emoji: '🤫',
+    title: 'Diana Asks You to Slow-Walk Raj\'s Budget',
+    fromWho: 'CFO',
+    durationMin: 30,
+    attendees: 'You + Diana, off the calendar',
+    flavor: '"Just take your time getting back to him." She is not asking.',
+    // Attend = play along (Diana ↑↑, but CTO will find out → relationship cost there too)
+    // Delegate = polite no
+    // Reschedule = pretend you missed it
+    attendImpact: { executiveConfidence: +6, visibility: +3, alignment: -6, morale: -4 },
+    delegateImpact: { executiveConfidence: -4, alignment: +2, morale: +2 },
+    rescheduleImpact: { executiveConfidence: -8, alignment: +3, morale: +3 },
+  },
+  {
+    id: 'feud-cto-vp',
+    emoji: '⚔️',
+    title: 'Raj and Tom Are Not Speaking',
+    fromWho: 'CTO',
+    durationMin: 45,
+    attendees: 'You, the messenger',
+    flavor: 'Raj filed a grievance about Tom\'s framework. Tom filed a counter-grievance. You are now the diplomat.',
+    attendImpact: { alignment: +6, executiveConfidence: +4, productivity: -5, burnout: +3 },
+    delegateImpact: { alignment: -5, executiveConfidence: -3 },
+    rescheduleImpact: { alignment: -8, morale: -3, executiveConfidence: -5 },
+  },
+  {
+    id: 'ceo-linkedin-disaster',
+    emoji: '🤳',
+    title: 'CEO Posted Something Concerning on LinkedIn',
+    fromWho: 'CEO LinkedIn',
+    durationMin: 60,
+    attendees: 'You, Legal, PR',
+    flavor: '"Real leaders don\'t need work-life balance. ⚡" Comments are on. Reply count: 312.',
+    attendImpact: { executiveConfidence: +8, visibility: +6, productivity: -8, burnout: +5, morale: -5 },
+    delegateImpact: { executiveConfidence: -6, visibility: -3, morale: -2 },
+    rescheduleImpact: { executiveConfidence: -10, visibility: -6, morale: +2 },
+  },
+  {
+    id: 'board-pre-read-rush',
+    emoji: '📑',
+    title: 'Board Wants Pre-Read by EOD',
+    fromWho: 'CFO',
+    durationMin: 90,
+    attendees: 'You, alone, with a deck',
+    flavor: 'Diana forwarded a Board email. The subject line is "URGENT". The body is also "URGENT".',
+    attendImpact: { executiveConfidence: +10, visibility: +5, productivity: -10, burnout: +6 },
+    delegateImpact: { executiveConfidence: -8, visibility: -3, productivity: -2 },
+    rescheduleImpact: { executiveConfidence: -15, visibility: -5, alignment: -3 },
+  },
+
+  // ── Board Sync climax — Stage 4 Day 20. Force-fired at day start. The
+  //    "attend" outcome is the only path forward; delegate/reschedule are
+  //    career-ending choices the player CAN make for the joke.
+  {
+    id: 'board-sync',
+    emoji: '🏛️',
+    title: 'The Board Sync',
+    fromWho: 'Board Chair',
+    durationMin: 120,
+    attendees: '7 Board members, all of leadership',
+    flavor: '"Walk us through the quarter." Marcus is sweating. Diana has rehearsed her slide twelve times. You have one shot.',
+    attendImpact: { executiveConfidence: +15, visibility: +12, alignment: +4, productivity: -12, burnout: +8 },
+    delegateImpact: { executiveConfidence: -25, visibility: -10, alignment: -8, morale: -4 },
+    rescheduleImpact: { executiveConfidence: -40, visibility: -15, alignment: -10, morale: -2 },
+  },
 ];
 
 /** Stage 1 quarterly goals — visible on Overview as progress bars. */
@@ -574,8 +702,23 @@ export const STAGE3_GOALS: QuarterlyGoal[] = [
   { id: 'g3-burnout',  label: "Don't Burn Out",         kpi: 'burnout',        emoji: '🔥', target: 70, lowerIsBetter: true },
 ];
 
+/**
+ * Stage 4 quarterly goals — survive the Board, hold an alliance, keep the
+ * CEO and Boss out of a PR Disaster pairing. Visibility cap is high because
+ * the Board Sync is a visibility windfall; if you tank it, the goal is
+ * lost AND a game-over fires.
+ */
+export const STAGE4_GOALS: QuarterlyGoal[] = [
+  { id: 'g4-boss',     label: 'Boss Confidence',        stakeholderId: 'boss', emoji: '🤝', target: 55 },
+  { id: 'g4-ceo',      label: 'CEO Patience',           stakeholderId: 'ceo',  emoji: '👔', target: 55 },
+  { id: 'g4-alignment', label: 'Hold the Coalition',    kpi: 'alignment',      emoji: '🤝', target: 65 },
+  { id: 'g4-visibility', label: 'Survive the Board',    kpi: 'visibility',     emoji: '🏛️', target: 70 },
+  { id: 'g4-burnout',  label: "Don't Implode",          kpi: 'burnout',        emoji: '🔥', target: 75, lowerIsBetter: true },
+];
+
 /** Stage → quarterly goal set. Falls back to Stage 1 for stages not built yet. */
 export function stageGoalsFor(stage: StageId): QuarterlyGoal[] {
+  if (stage === 4) return STAGE4_GOALS;
   if (stage === 3) return STAGE3_GOALS;
   if (stage === 2) return STAGE2_GOALS;
   return STAGE1_GOALS;
@@ -595,9 +738,11 @@ export function capFor(stage: StageId): number {
 /**
  * Stage 3+ politics multiplier. Per the gameplay plan, Stage 3 doubles down
  * on political consequences: every relationship change is ×1.5. Mistakes
- * hurt more, alliances pay more.
+ * hurt more, alliances pay more. Stage 4 bumps it again — alliances and
+ * feuds are real, the Board is watching.
  */
 export function politicsMultiplier(stage: StageId): number {
+  if (stage >= 4) return 1.75;
   if (stage >= 3) return 1.5;
   return 1;
 }

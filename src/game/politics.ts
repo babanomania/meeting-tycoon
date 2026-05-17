@@ -74,3 +74,53 @@ export function adjustRelationship(
     };
   });
 }
+
+// ──────────────────────────────────────────────────────────────────────────
+// Stage 4: Stakeholder Alliances and Feuds
+//
+// Alliances form when two stakeholders both sit at ≥70. They quietly back
+// each other in meetings, which materializes as a small bonus to a paired
+// KPI at day-end (see store.endDay).
+//
+// Feuds form when two stakeholders both sit at ≤30. They actively undermine
+// each other, costing alignment.
+//
+// The pairings are *fixed* (not all pairs are politically plausible —
+// CFO-CTO almost never align, CEO-Boss naturally do). Hand-picked below.
+// ──────────────────────────────────────────────────────────────────────────
+
+/** Hand-picked "natural" stakeholder pairings. Order doesn't matter. */
+export const ALLIANCE_PAIRS: ReadonlyArray<readonly [StakeholderId, StakeholderId]> = [
+  ['boss', 'ceo'],       // your boss & the CEO are above you, naturally aligned
+  ['ceo', 'vp_strategy'], // CEO loves a strategist
+  ['cfo', 'ceo'],        // CFO and CEO co-own the board narrative
+  ['cto', 'chro'],       // ops + people, the "keep the team alive" coalition
+  ['vp_strategy', 'chro'], // strategy + culture, the soft-power axis
+];
+
+export interface Alliance {
+  pair: [StakeholderId, StakeholderId];
+  kind: 'alliance' | 'feud';
+  /** Average relationship of the pair — used to sort/show strength. */
+  strength: number;
+}
+
+/**
+ * Detect alliances + feuds among the current stakeholder roster.
+ * Returns a list of pair states the UI can render and the store can reward.
+ */
+export function detectAlliances(list: Stakeholder[]): Alliance[] {
+  const out: Alliance[] = [];
+  for (const pair of ALLIANCE_PAIRS) {
+    const a = list.find((s) => s.id === pair[0]);
+    const b = list.find((s) => s.id === pair[1]);
+    if (!a || !b) continue;
+    const avg = (a.relationship + b.relationship) / 2;
+    if (a.relationship >= 70 && b.relationship >= 70) {
+      out.push({ pair: [pair[0], pair[1]], kind: 'alliance', strength: avg });
+    } else if (a.relationship <= 30 && b.relationship <= 30) {
+      out.push({ pair: [pair[0], pair[1]], kind: 'feud', strength: avg });
+    }
+  }
+  return out;
+}

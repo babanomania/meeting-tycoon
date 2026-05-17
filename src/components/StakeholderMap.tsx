@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { SENTIMENT_META, sentimentFor } from '@/game/politics';
+import { SENTIMENT_META, detectAlliances, sentimentFor } from '@/game/politics';
 import { characterPhoto, characterDisplayName } from '@/game/characters';
 import { initials } from './Avatar';
 import type { Stakeholder, StakeholderId } from '@/game/types';
@@ -8,6 +8,8 @@ interface Props {
   stakeholders: Stakeholder[];
   bossId?: StakeholderId;
   onNodeTap?: (id: StakeholderId) => void;
+  /** Stage 4+ overlays alliance / feud edges between stakeholders. */
+  showAlliances?: boolean;
 }
 
 /**
@@ -19,7 +21,7 @@ interface Props {
  * - When the stakeholder has a registered AI photo, the circle renders an
  *   `<image>` clipped to a circle; otherwise we fall back to initials.
  */
-export function StakeholderMap({ stakeholders, bossId = 'boss', onNodeTap }: Props) {
+export function StakeholderMap({ stakeholders, bossId = 'boss', onNodeTap, showAlliances }: Props) {
   // viewBox is sized to fit:
   //   - the boss BOSS pill above the top node (cy − r − 10), and
   //   - the sentiment label under the bottom node (cy + r + 26).
@@ -43,6 +45,23 @@ export function StakeholderMap({ stakeholders, bossId = 'boss', onNodeTap }: Pro
       return { s, cx, cy, isBoss: s.id === bossId };
     });
   }, [ordered, bossId]);
+
+  /** Stage 4+ alliance / feud overlays — curved edges between paired nodes. */
+  const allianceEdges = useMemo(() => {
+    if (!showAlliances) return [];
+    const map = new Map(positions.map((p) => [p.s.id, p]));
+    return detectAlliances(stakeholders)
+      .map((a) => {
+        const ap = map.get(a.pair[0]);
+        const bp = map.get(a.pair[1]);
+        if (!ap || !bp) return null;
+        return { ...a, ap, bp };
+      })
+      .filter(Boolean) as Array<ReturnType<typeof detectAlliances>[number] & {
+        ap: typeof positions[number];
+        bp: typeof positions[number];
+      }>;
+  }, [stakeholders, positions, showAlliances]);
 
   return (
     <div className="relative w-full" style={{ aspectRatio: '1 / 1', maxWidth: 380 }}>
@@ -77,6 +96,49 @@ export function StakeholderMap({ stakeholders, bossId = 'boss', onNodeTap }: Pro
               strokeLinecap="round"
               opacity={0.7}
             />
+          );
+        })}
+
+        {/* Stage 4 alliance / feud overlays — curved arcs between pairs. */}
+        {allianceEdges.map((edge) => {
+          const stroke = edge.kind === 'alliance' ? '#10B981' : '#EF4444';
+          const dash = edge.kind === 'alliance' ? undefined : '4 3';
+          // Quadratic curve bent toward center for visual distinction.
+          const mx = (edge.ap.cx + edge.bp.cx) / 2;
+          const my = (edge.ap.cy + edge.bp.cy) / 2;
+          const dx = mx - CENTER;
+          const dy = my - CENTER;
+          const len = Math.sqrt(dx * dx + dy * dy) || 1;
+          const cpx = mx - (dx / len) * 14;
+          const cpy = my - (dy / len) * 14;
+          return (
+            <g key={`alliance-${edge.pair[0]}-${edge.pair[1]}`}>
+              <path
+                d={`M ${edge.ap.cx} ${edge.ap.cy} Q ${cpx} ${cpy} ${edge.bp.cx} ${edge.bp.cy}`}
+                stroke={stroke}
+                strokeWidth={2.5}
+                strokeDasharray={dash}
+                strokeLinecap="round"
+                fill="none"
+                opacity={0.85}
+              />
+              {/* Tiny chip at midpoint labels the relationship. */}
+              <g transform={`translate(${cpx}, ${cpy})`}>
+                <rect x={-22} y={-7} width={44} height={14} rx={7} fill={stroke} />
+                <text
+                  x={0}
+                  y={3}
+                  textAnchor="middle"
+                  fontSize={8}
+                  fontWeight={800}
+                  fill="white"
+                  fontFamily="Inter, sans-serif"
+                  letterSpacing={1}
+                >
+                  {edge.kind === 'alliance' ? 'ALLIANCE' : 'FEUD'}
+                </text>
+              </g>
+            </g>
           );
         })}
 

@@ -6,11 +6,13 @@ import type { GameOverReason } from '@/game/types';
 
 /** Map fail reason → header icon. */
 const REASON_ICON: Record<GameOverReason, IconName> = {
-  'team-walkout':         'arrow-right',
-  'fired-low-confidence': 'inbox',
-  'burnout-sabbatical':   'fire',
-  'restructured':         'people',
-  'process-paralysis':    'clock',
+  'team-walkout':            'arrow-right',
+  'fired-low-confidence':    'inbox',
+  'burnout-sabbatical':      'fire',
+  'restructured':            'people',
+  'process-paralysis':       'clock',
+  'board-confidence-lost':   'star',
+  'pr-disaster-reassigned':  'sparkle',
 };
 
 export function GameOver() {

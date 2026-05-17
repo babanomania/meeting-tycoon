@@ -58,7 +58,7 @@ export function People() {
             Stakeholder Map
           </div>
           <div className="flex justify-center">
-            <StakeholderMap stakeholders={stakeholders} />
+            <StakeholderMap stakeholders={stakeholders} showAlliances={stage >= 4} />
           </div>
           <PoliticalHeatRow heat={heat} />
         </motion.div>

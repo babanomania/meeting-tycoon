@@ -21,13 +21,16 @@ import type {
 import {
   STAKEHOLDERS_SEED,
   adjustRelationship,
+  detectAlliances,
   senderToStakeholder,
+  type Alliance,
 } from './politics';
 import { characterDisplayName } from './characters';
 import {
   CHAOS_EVENTS,
   MEETING_TYPES,
   STAGE1_GOALS,
+  STAGE4_GOALS,
   capFor,
   politicsMultiplier,
   requestsForDay,
@@ -57,6 +60,30 @@ const STARTING_KPIS: Kpis = {
 const STAGE1_LAST_DAY = 5;
 const STAGE2_LAST_DAY = 10;
 const STAGE3_LAST_DAY = 15;
+const STAGE4_LAST_DAY = 20;
+
+/**
+ * Stage 4: each active alliance pumps one themed KPI by this much at day-end.
+ * Feuds drain alignment by the same amount.
+ */
+const ALLIANCE_KPI_BONUS = 3;
+
+/**
+ * Stage 4: which KPI each alliance pair boosts when active. Hand-picked so
+ * the bonus feels narratively earned (boss + CEO = top-cover → visibility).
+ */
+const ALLIANCE_KPI_OWNER: Record<string, keyof Kpis> = {
+  'boss|ceo':         'visibility',
+  'ceo|vp_strategy':  'executiveConfidence',
+  'cfo|ceo':          'alignment',
+  'cto|chro':         'morale',
+  'vp_strategy|chro': 'alignment',
+};
+
+function allianceKey(a: Alliance): string {
+  // Match the keys in ALLIANCE_KPI_OWNER — order matches politics.ALLIANCE_PAIRS.
+  return `${a.pair[0]}|${a.pair[1]}`;
+}
 /**
  * Legacy constant — still exported for older callers that hard-coded "5".
  * New code should call `capFor(stage)` instead. The Stage 2 transition
@@ -144,7 +171,28 @@ const checkGameOver = (
   k: Kpis,
   stakeholders: Stakeholder[],
   stage: 1 | 2 | 3 | 4 | 5,
+  /** Extra Stage 4 signals — passed from endDay so the check knows about
+   *  cumulative PR disasters and the Board Sync outcome. */
+  prDisasterStrikes: number = 0,
+  boardSyncFailed: boolean = false,
 ): GameOver | null => {
+  // ── Stage 4 thematic endings, checked first so they outrank generic ones.
+  if (boardSyncFailed) {
+    return {
+      reason: 'board-confidence-lost',
+      emoji: '🏛️',
+      title: 'Board Confidence Lost',
+      body: 'The Board reviewed the quarter and concluded that "a change in operating leadership would unlock new energy". You unlocked it. You are no longer in the unlock business.',
+    };
+  }
+  if (stage >= 4 && prDisasterStrikes >= 2) {
+    return {
+      reason: 'pr-disaster-reassigned',
+      emoji: '🤳',
+      title: 'Reassigned to Special Projects',
+      body: 'Two PR disasters in one stage was, in retrospect, two too many. Your title remains. Your scope does not. Your new charter: "exploratory white-space initiatives." There is no white space.',
+    };
+  }
   if (k.morale <= 10) {
     return {
       reason: 'team-walkout',
@@ -240,6 +288,12 @@ interface GameState {
   approvalChainsCleared: number;
   /** How many chaos events the player has punted to the boss this stage. */
   chaosPassedToBoss: number;
+
+  // ── Stage 4 mechanics ──
+  /** How many PR Disasters have auto-fired this stage. 2 = game-over. */
+  prDisasterStrikes: number;
+  /** Result of the Day 20 Board Sync, set at end of Day 20. */
+  boardSyncResult: { passed: boolean; goalsMet: number; goalsTotal: number } | null;
 
   // ── Chat ───────────────────────────────────────────────────────────────
   conversations: Conversation[];
@@ -522,6 +576,8 @@ export const useGame = create<GameState>()(
       carryoverRequests: [],
       approvalChainsCleared: 0,
       chaosPassedToBoss: 0,
+      prDisasterStrikes: 0,
+      boardSyncResult: null,
       conversations: [],
       messages: {},
       openConversationId: null,
@@ -1132,13 +1188,50 @@ export const useGame = create<GameState>()(
             }
           : {};
 
-        const totalDelta = sumDeltas(sumDeltas(meetingsDelta, s.chaosDelta), restDelta);
+        // ── Stage 4 alliance / feud bonuses ──
+        // Each active alliance pumps one themed KPI. Each active feud bleeds
+        // alignment. Computed off pre-end-day stakeholders (the day's actions
+        // already moved them; we award based on where they stand right now).
+        const allianceDelta: KpiDelta = {};
+        if (s.stage >= 4) {
+          for (const a of detectAlliances(s.stakeholders)) {
+            if (a.kind === 'alliance') {
+              const kpiKey = ALLIANCE_KPI_OWNER[allianceKey(a)];
+              if (kpiKey) {
+                allianceDelta[kpiKey] = (allianceDelta[kpiKey] ?? 0) + ALLIANCE_KPI_BONUS;
+              }
+            } else {
+              // Feud — undermines alignment regardless of pair.
+              allianceDelta.alignment = (allianceDelta.alignment ?? 0) - ALLIANCE_KPI_BONUS;
+            }
+          }
+        }
+
+        const totalDelta = sumDeltas(
+          sumDeltas(sumDeltas(meetingsDelta, s.chaosDelta), restDelta),
+          allianceDelta,
+        );
 
         const timeInMeetingsMin = sched.reduce((a, m) => a + MEETING_TYPES[m.typeId].durationMin, 0);
         const peopleMet = sched.reduce((a, m) => a + MEETING_TYPES[m.typeId].attendees, 0);
         const decisionsMade = Math.max(0, Math.round(sched.length * 0.15));
 
-        const nextKpis = applyDelta(s.kpis, totalDelta);
+        // ── Stage 4 PR Disaster auto-fire ──
+        // If Boss + CEO are both cool to you at day end, the CEO posts on
+        // LinkedIn and the org reads it. -15 ExecConf, fires chat broadcast,
+        // counts toward the "Reassigned to Special Projects" failure.
+        let prFiredThisEndDay = false;
+        let extraDelta: KpiDelta = {};
+        if (s.stage >= 4) {
+          const boss = s.stakeholders.find((x) => x.id === 'boss');
+          const ceo = s.stakeholders.find((x) => x.id === 'ceo');
+          if (boss && ceo && boss.relationship < 50 && ceo.relationship < 50) {
+            prFiredThisEndDay = true;
+            extraDelta = { executiveConfidence: -15, visibility: +4, morale: -3 };
+          }
+        }
+
+        const nextKpis = applyDelta(applyDelta(s.kpis, totalDelta), extraDelta);
         // Boss feedback now sees the post-recovery KPIs so it can praise
         // light-day restraint.
         const feedback = pickBossFeedback(totalDelta, sched.length, unusedSlots, nextKpis);
@@ -1149,28 +1242,65 @@ export const useGame = create<GameState>()(
           decisionsMade,
           timeInMeetingsHrs: Math.round((timeInMeetingsMin / 60) * 10) / 10,
           actualWorkHrs: Math.max(0, Math.round(((540 - timeInMeetingsMin) / 60) * 10) / 10),
-          kpiDelta: totalDelta,
+          kpiDelta: sumDeltas(totalDelta, extraDelta),
           restDelta,
           unusedSlots,
           boss: feedback,
         };
 
-        const over = checkGameOver(nextKpis, s.stakeholders, s.stage);
+        // ── Stage 4 Day 20 Board Sync evaluation ──
+        // At end of Day 20, check Stage 4 goals. Need 3 of 5 to "survive" the
+        // Board. Anything less → Board Confidence Lost game-over.
+        let boardSyncResult = s.boardSyncResult;
+        let boardSyncFailed = false;
+        if (s.stage === 4 && s.day === STAGE4_LAST_DAY) {
+          const goals = STAGE4_GOALS;
+          const hit = goals.filter((g) => {
+            const v = g.kpi
+              ? nextKpis[g.kpi]
+              : g.stakeholderId
+              ? s.stakeholders.find((x) => x.id === g.stakeholderId)?.relationship ?? 0
+              : 0;
+            return g.lowerIsBetter ? v <= g.target : v >= g.target;
+          }).length;
+          const passed = hit >= 3;
+          boardSyncResult = { passed, goalsMet: hit, goalsTotal: goals.length };
+          if (!passed) boardSyncFailed = true;
+        }
+
+        const prStrikesNext = prFiredThisEndDay ? s.prDisasterStrikes + 1 : s.prDisasterStrikes;
+        const over = checkGameOver(nextKpis, s.stakeholders, s.stage, prStrikesNext, boardSyncFailed);
 
         // Fire post-meeting messages in each meeting chat.
-        const { conversations: convos1, messages: msgs1 } = fireMeetingHeldMessages(
+        let convos2 = s.conversations;
+        let msgs2 = s.messages;
+        ({ conversations: convos2, messages: msgs2 } = fireMeetingHeldMessages(
           sched,
-          s.conversations,
-          s.messages,
+          convos2,
+          msgs2,
           Date.now(),
-        );
-        // Fire end-of-day sentiment reactions in group channels. Now passes
-        // meetings + unusedSlots so reactions can fire for light/recovered days.
-        const { conversations: convos2, messages: msgs2 } = applyChatEvent(
-          convos1,
-          msgs1,
+        ));
+        // Fire end-of-day sentiment reactions in group channels.
+        ({ conversations: convos2, messages: msgs2 } = applyChatEvent(
+          convos2, msgs2,
           { type: 'day-end', kpis: nextKpis, meetingsHeld: sched.length, unusedSlots },
-        );
+        ));
+        // Stage 4 PR Disaster broadcast — fires in #leadership and #general.
+        if (prFiredThisEndDay) {
+          ({ conversations: convos2, messages: msgs2 } = applyChatEvent(
+            convos2, msgs2,
+            { type: 'pr-disaster-fired' },
+          ));
+        }
+        // Stage 4 Board Sync result — broadcast pass / fail in #leadership.
+        if (boardSyncResult) {
+          ({ conversations: convos2, messages: msgs2 } = applyChatEvent(
+            convos2, msgs2,
+            boardSyncResult.passed
+              ? { type: 'board-sync-passed', goalsMet: boardSyncResult.goalsMet, goalsTotal: boardSyncResult.goalsTotal }
+              : { type: 'board-sync-failed', goalsMet: boardSyncResult.goalsMet, goalsTotal: boardSyncResult.goalsTotal },
+          ));
+        }
 
         set({
           lastResult: result,
@@ -1180,6 +1310,8 @@ export const useGame = create<GameState>()(
           activeChaos: null,
           conversations: convos2,
           messages: msgs2,
+          prDisasterStrikes: prStrikesNext,
+          boardSyncResult,
         });
         return result;
       },
@@ -1189,12 +1321,15 @@ export const useGame = create<GameState>()(
         const finishedStage1 = s.stage === 1 && s.day >= STAGE1_LAST_DAY;
         const finishedStage2 = s.stage === 2 && s.day >= STAGE2_LAST_DAY;
         const finishedStage3 = s.stage === 3 && s.day >= STAGE3_LAST_DAY;
+        const finishedStage4 = s.stage === 4 && s.day >= STAGE4_LAST_DAY;
         const nextStage: 1 | 2 | 3 | 4 | 5 = finishedStage1
           ? 2
           : finishedStage2
           ? 3
           : finishedStage3
           ? 4
+          : finishedStage4
+          ? 5
           : s.stage;
         const stageChanged = nextStage !== s.stage;
         const stageUnlocked: 2 | 3 | 4 | 5 | null = finishedStage1
@@ -1203,6 +1338,8 @@ export const useGame = create<GameState>()(
           ? 3
           : finishedStage3
           ? 4
+          : finishedStage4
+          ? 5
           : null;
 
         const recurringCarry: ScheduledMeeting[] = s.schedule
@@ -1252,6 +1389,17 @@ export const useGame = create<GameState>()(
           }
         }
 
+        // ── Stage 4 Board Sync climax ──
+        // On Day 20 (the final Stage 4 day), the Board Sync chaos is forced
+        // at day-start regardless of accept count. How the player responds
+        // sets up the end-of-day goal evaluation.
+        if (nextStage === 4 && nextDay === STAGE4_LAST_DAY) {
+          nextActiveChaos = {
+            id: 'board-sync',
+            uid: `chaos-${Date.now()}-board-sync`,
+          };
+        }
+
         // ── Stage 3 approval-chain carryover ───────────────────────────────
         // Approval-gated requests from previous days that weren't actioned
         // follow the player into the next day. On stage transitions, the
@@ -1297,6 +1445,9 @@ export const useGame = create<GameState>()(
           requestApprovals: nextApprovalsAfterTick,
           approvalChainsCleared: stageChanged ? 0 : s.approvalChainsCleared,
           chaosPassedToBoss: stageChanged ? 0 : s.chaosPassedToBoss,
+          // Stage 4 ledger — PR strikes reset on stage exit, Board Sync clears too.
+          prDisasterStrikes: stageChanged ? 0 : s.prDisasterStrikes,
+          boardSyncResult: stageChanged ? null : s.boardSyncResult,
           activityToday: recurringCarry.length
             ? recurringCarry.map((m, i) => ({
                 id: `dayseed-${Date.now()}-${i}`,
@@ -1376,11 +1527,11 @@ export const useGame = create<GameState>()(
     }),
     {
       name: 'meeting-tycoon-save',
-      // Bumped for Stage 3: new state fields (requestApprovals, carryoverRequests,
-      // approvalChainsCleared, chaosPassedToBoss) + new game-over reason
-      // ('process-paralysis') + new chaos response ('pass-to-boss'). Old saves
-      // would crash on read.
-      version: 11,
+      // Bumped for Stage 4: new state fields (prDisasterStrikes, boardSyncResult)
+      // + new game-over reasons (board-confidence-lost, pr-disaster-reassigned)
+      // + new chaos events (backchannel-cfo, feud-cto-vp, ceo-linkedin-disaster,
+      // board-pre-read-rush, board-sync). Old saves wipe.
+      version: 12,
       migrate: () => undefined,
     },
   ),
@@ -1492,4 +1643,4 @@ function pickBossFeedback(
   };
 }
 
-export { STARTING_KPIS, applyDelta, STAGE1_LAST_DAY, STAGE2_LAST_DAY, STAGE3_LAST_DAY, DAILY_ACCEPT_CAP };
+export { STARTING_KPIS, applyDelta, STAGE1_LAST_DAY, STAGE2_LAST_DAY, STAGE3_LAST_DAY, STAGE4_LAST_DAY, DAILY_ACCEPT_CAP };

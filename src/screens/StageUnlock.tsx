@@ -42,12 +42,23 @@ const STAGE_META: Record<number, StageMeta> = {
   4: {
     name: 'Corporate Madness',
     tagline:
-      'Multi-day meetings, stakeholder alliances, the Board Sync. Stage 4 is being built — for now expect Stage 3 pressure with mounting absurdity.',
+      'The org chart eats itself. Alliances pay off, feuds bite, and the Board is watching. Day 20 climaxes with a single survival check.',
     unlocks: [
-      { icon: 'calendar', title: 'Multi-Day Meetings', sub: '2- and 3-day workshops. Eat slots across days. In design.' },
-      { icon: 'people',   title: 'Stakeholder Alliances', sub: 'Two friends at 70+ form an alliance. Two enemies trigger feuds. In design.' },
-      { icon: 'alert',    title: 'Crisis Stacking',    sub: 'Up to two chaos events at once. Triage. In design.' },
-      { icon: 'star',     title: 'The Board Sync',     sub: 'Day 20 climax. All goals evaluated. In design.' },
+      { icon: 'people',   title: 'Stakeholder Alliances', sub: 'Two friends at 70+ form an alliance — +3 to a paired KPI at day-end. Two enemies at 30- trigger feuds that drain Alignment.' },
+      { icon: 'sparkle',  title: 'PR Disaster',           sub: 'If Boss + CEO both drop below 50, a CEO LinkedIn post fires at day-end: -15 ExecConf, broadcast. Two in one stage = Reassigned.' },
+      { icon: 'star',     title: 'The Board Sync',        sub: 'Day 20 force-fires a 2-hour Board chaos. End the day with 3 of 5 Stage 4 goals or lose Board confidence.' },
+      { icon: 'fire',     title: 'Politics ×1.75',        sub: 'Every relationship change scales again. Alliances earn more, mistakes cost more.' },
+    ],
+  },
+  5: {
+    name: 'Executive Absurdity',
+    tagline:
+      'Committees run everything. You maintain the illusion. Stage 5 is being built — for now expect Stage 4 mechanics with even less margin.',
+    unlocks: [
+      { icon: 'people',   title: 'Mandatory Committees',   sub: 'Every accepted meeting spawns 1-2 follow-ups. In design.' },
+      { icon: 'sparkle',  title: 'AI Meeting Notes Bot',   sub: 'A bot floods #general after every meeting. In design.' },
+      { icon: 'eye',      title: 'Executive Dashboard',    sub: 'Toggle to "Board View" — numbers shown as 1.5x reality. In design.' },
+      { icon: 'star',     title: 'The Promotion',          sub: 'End Day 25 with all 5 goals hit and retire as VP. In design.' },
     ],
   },
 };

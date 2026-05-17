@@ -529,6 +529,112 @@ export const EVENT_REACTIONS: Array<{
       },
     ],
   },
+
+  // ── Stage 4 events ─────────────────────────────────────────────────────
+  // PR Disaster auto-fired — CEO posts on LinkedIn, #leadership + #general react.
+  {
+    match: (e) => e.type === 'pr-disaster-fired',
+    reactions: [
+      {
+        conversationId: 'group-leadership',
+        sender: 'CHRO',
+        body: () => 'we need to talk about the LinkedIn post. all of us.',
+        reactions: ['💀', '🤳', '😬'],
+      },
+      {
+        conversationId: 'group-general',
+        sender: 'Pat L.',
+        body: () => 'did anyone else see what Marcus posted',
+        reactions: ['👀', '😬', '💀'],
+      },
+      {
+        conversationId: 'group-engineering',
+        sender: 'Dev S.',
+        body: () => 'screenshotting for the group chat',
+        reactions: ['📸', '💀'],
+      },
+    ],
+  },
+  // Backchannel chaos — Diana's quiet ask.
+  {
+    match: (e) => e.type === 'chaos-resolved' && e.chaosId === 'backchannel-cfo',
+    reactions: [
+      {
+        conversationId: 'group-leadership',
+        sender: 'CFO',
+        body: () => "let's keep that between us. (it will not stay between us.)",
+        reactions: ['🤫'],
+      },
+    ],
+  },
+  // Feud chaos — both CTO and VP weigh in publicly.
+  {
+    match: (e) => e.type === 'chaos-resolved' && e.chaosId === 'feud-cto-vp',
+    reactions: [
+      {
+        conversationId: 'group-leadership',
+        sender: 'CTO',
+        body: () => 'I will not be in a room with that "framework" again.',
+        reactions: ['⚔️'],
+      },
+      {
+        conversationId: 'group-leadership',
+        sender: 'VP Strategy',
+        body: () => 'the framework is sound. the operator is the issue.',
+        reactions: ['⚔️', '🍿'],
+      },
+    ],
+  },
+  // CEO LinkedIn disaster chaos resolved — Marcus doubles down.
+  {
+    match: (e) => e.type === 'chaos-resolved' && e.chaosId === 'ceo-linkedin-disaster',
+    reactions: [
+      {
+        conversationId: 'group-leadership',
+        sender: 'CEO',
+        body: () => 'engagement is up. I am calling that a win.',
+        reactions: ['📈', '😬'],
+      },
+    ],
+  },
+  // Board Sync chaos resolved — the board reacts via CFO who was in the room.
+  {
+    match: (e) => e.type === 'chaos-resolved' && e.chaosId === 'board-sync',
+    reactions: [
+      {
+        conversationId: 'group-leadership',
+        sender: 'CFO',
+        body: () => 'Board adjourned. Diana is "synthesizing the feedback".',
+        reactions: ['🏛️', '🙏'],
+      },
+    ],
+  },
+  // Board Sync result — fired at end of Day 20.
+  {
+    match: (e) => e.type === 'board-sync-passed',
+    reactions: [
+      {
+        conversationId: 'group-leadership',
+        sender: 'CEO',
+        body: (e) =>
+          e.type === 'board-sync-passed'
+            ? `Board approved. ${e.goalsMet}/${e.goalsTotal} stage goals hit. Stage 5 unlocked.`
+            : 'Board approved.',
+        reactions: ['🏛️', '🙌'],
+      },
+    ],
+  },
+  {
+    match: (e) => e.type === 'board-sync-failed',
+    reactions: [
+      {
+        conversationId: 'group-leadership',
+        sender: 'CHRO',
+        body: () => 'Board "expressed concerns". David is on a call.',
+        reactions: ['😬', '🌀'],
+      },
+    ],
+  },
 ];
 
 // ──────────────────────────────────────────────────────────────────────────
