@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useGame, DAILY_ACCEPT_CAP, projectKpis, pendingRequestsFor } from '@/game/store';
-import { MEETING_TYPES, STAGE1_GOALS } from '@/game/data';
+import { useGame, projectKpis, pendingRequestsFor } from '@/game/store';
+import { MEETING_TYPES, capFor, stageGoalsFor } from '@/game/data';
 import { Icon } from '@/components/Icon';
 import { MenuButton } from '@/components/SettingsDrawer';
 import { Avatar } from '@/components/Avatar';
@@ -32,6 +32,7 @@ const PRIORITY_RAIL: Record<MeetingPriority, string> = {
 
 export function InboxScreen() {
   const day = useGame((s) => s.day);
+  const stage = useGame((s) => s.stage);
   const accepted = useGame((s) => s.acceptedRequestIds);
   const kpis = useGame((s) => s.kpis);
   const acceptRequest = useGame((s) => s.acceptRequest);
@@ -43,10 +44,11 @@ export function InboxScreen() {
     () => pendingRequestsFor(day, accepted, schedule),
     [day, accepted, schedule],
   );
+  const cap = capFor(stage);
   const acceptsToday = accepted.filter(
     (id) => !id.startsWith('decline:') && !id.startsWith('recurring:'),
   ).length;
-  const acceptsLeft = Math.max(0, DAILY_ACCEPT_CAP - acceptsToday);
+  const acceptsLeft = Math.max(0, cap - acceptsToday);
   const capReached = acceptsLeft === 0;
 
   return (
@@ -79,7 +81,7 @@ export function InboxScreen() {
         <Icon name={capReached ? 'alert' : 'shield'} size={14} />
         <span>
           {capReached ? (
-            <>You've hit today's <b>{DAILY_ACCEPT_CAP}-meeting cap</b>. Decline the rest or end the day.</>
+            <>You've hit today's <b>{cap}-meeting cap</b>. Decline the rest or end the day.</>
           ) : (
             <>You can accept <b>{acceptsLeft}</b> more {acceptsLeft === 1 ? 'meeting' : 'meetings'} today. Choose wisely.</>
           )}
@@ -128,7 +130,7 @@ export function InboxScreen() {
                       <div className="text-[11px] text-ink-400 mt-1 leading-snug">{t.flavor}</div>
 
                       <ImpactRow delta={t.impact} />
-                      <GoalProjection delta={t.impact} kpis={kpis} />
+                      <GoalProjection delta={t.impact} kpis={kpis} goals={stageGoalsFor(stage)} />
 
                       <div className="mt-3 flex items-center gap-2">
                         <button
@@ -198,9 +200,9 @@ function ImpactRow({ delta }: { delta: KpiDelta }) {
 }
 
 /** Show how this meeting moves the player toward / away from any active quarterly goal. */
-function GoalProjection({ delta, kpis }: { delta: KpiDelta; kpis: Kpis }) {
+function GoalProjection({ delta, kpis, goals }: { delta: KpiDelta; kpis: Kpis; goals: QuarterlyGoal[] }) {
   const projected = projectKpis(kpis, delta);
-  const movements = STAGE1_GOALS.flatMap((g) => projectGoalMovement(g, kpis, projected));
+  const movements = goals.flatMap((g) => projectGoalMovement(g, kpis, projected));
   if (movements.length === 0) return null;
   return (
     <div className="mt-2 rounded-sm bg-ink-50 px-2.5 py-1.5 space-y-0.5">

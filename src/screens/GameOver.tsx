@@ -9,6 +9,7 @@ const REASON_ICON: Record<GameOverReason, IconName> = {
   'team-walkout':         'arrow-right',
   'fired-low-confidence': 'inbox',
   'burnout-sabbatical':   'fire',
+  'restructured':         'people',
 };
 
 export function GameOver() {

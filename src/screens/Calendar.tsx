@@ -1,10 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useGame, DAILY_ACCEPT_CAP, pendingRequestsFor } from '@/game/store';
-import { MEETING_TYPES, STAGE1_GOALS } from '@/game/data';
+import { useGame, pendingRequestsFor } from '@/game/store';
+import { MEETING_TYPES, capFor, stageGoalsFor } from '@/game/data';
 import { Icon } from '@/components/Icon';
 import { MenuButton } from '@/components/SettingsDrawer';
 import { isGoalAchieved, goalCurrentValue } from '@/components/GoalsCard';
-import type { MeetingPriority, Kpis, Stakeholder } from '@/game/types';
+import type { MeetingPriority, Kpis, Stakeholder, QuarterlyGoal } from '@/game/types';
 
 const HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
 
@@ -53,11 +53,19 @@ export function CalendarScreen() {
   const schedule = useGame((s) => s.schedule);
   const accepted = useGame((s) => s.acceptedRequestIds);
   const day = useGame((s) => s.day);
+  const stage = useGame((s) => s.stage);
   const setScreen = useGame((s) => s.setScreen);
   const endDay = useGame((s) => s.endDay);
   const openDetail = useGame((s) => s.openDetail);
   const kpis = useGame((s) => s.kpis);
   const stakeholders = useGame((s) => s.stakeholders);
+  const scheduleShieldMeeting = useGame((s) => s.scheduleShieldMeeting);
+  const sendDashboardReport = useGame((s) => s.sendDashboardReport);
+  const dashboardSentToday = useGame((s) => s.dashboardSentToday);
+  const shieldMeetingsToday = useGame((s) => s.shieldMeetingsToday);
+
+  const cap = capFor(stage);
+  const goals = stageGoalsFor(stage);
 
   const totalMin = schedule.reduce((a, m) => a + MEETING_TYPES[m.typeId].durationMin, 0);
   const focusHrs = Math.max(0, Math.round(((540 - totalMin) / 60) * 10) / 10);
@@ -67,7 +75,7 @@ export function CalendarScreen() {
   const acceptsToday = accepted.filter(
     (id) => !id.startsWith('decline:') && !id.startsWith('recurring:'),
   ).length;
-  const acceptsLeft = Math.max(0, DAILY_ACCEPT_CAP - acceptsToday);
+  const acceptsLeft = Math.max(0, cap - acceptsToday);
 
   return (
     <div className="flex flex-col h-full">
@@ -76,7 +84,7 @@ export function CalendarScreen() {
         <MenuButton />
         <div className="min-w-0 flex-1">
           <div className="text-[10.5px] font-semibold uppercase tracking-widest text-ink-400">
-            Stage 1 · Day {day}
+            Stage {stage} · Day {day}
           </div>
           <h1 className="text-[20px] font-bold text-ink-800 leading-tight mt-0.5">
             {dayLabel(day)}
@@ -97,7 +105,39 @@ export function CalendarScreen() {
       </div>
 
       {/* Goals pill row — always visible reminder of what you're chasing this week */}
-      <GoalsPillRow kpis={kpis} stakeholders={stakeholders} onTap={() => setScreen('home')} />
+      <GoalsPillRow goals={goals} kpis={kpis} stakeholders={stakeholders} onTap={() => setScreen('home')} />
+
+      {/* Stage 2+ defensive actions: Shield & Dashboard. These are the "play
+          back" surfaces — for the first time, the player can spend a slot on
+          themselves (Shield) or trade an hour of meetings for a slide deck
+          (Dashboard). Hidden until Stage 2 to keep onboarding clean. */}
+      {stage >= 2 && (
+        <div className="px-5 py-2.5 border-b border-ink-100 flex gap-2">
+          <button
+            onClick={scheduleShieldMeeting}
+            disabled={acceptsLeft === 0}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-sm bg-emerald-50 text-emerald-700 border border-emerald-100 font-semibold text-[12px] hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Block 60 min of focus time. Costs one accept slot. No relationship hit."
+          >
+            <Icon name="shield" size={14} />
+            Shield 60m
+            {shieldMeetingsToday > 0 && (
+              <span className="ml-1 text-[10px] text-emerald-600/70 font-bold">
+                ×{shieldMeetingsToday}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={sendDashboardReport}
+            disabled={dashboardSentToday}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-sm bg-brand-50 text-brand-700 border border-brand-100 font-semibold text-[12px] hover:bg-brand-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Send a dashboard report instead of attending. Once per day."
+          >
+            <Icon name="send" size={14} />
+            {dashboardSentToday ? 'Sent today' : 'Send Report'}
+          </button>
+        </div>
+      )}
 
       {/* Capacity row */}
       <div className="px-5 py-2.5 bg-ink-50/60 border-b border-ink-100 flex items-center justify-between text-[11.5px]">
@@ -109,7 +149,7 @@ export function CalendarScreen() {
           <span className="font-semibold text-emerald-700">{focusHrs}h</span> focus
         </span>
         <span className={`font-semibold ${acceptsLeft === 0 ? 'text-rose-600' : 'text-ink-500'}`}>
-          {acceptsLeft}/{DAILY_ACCEPT_CAP} accepts left
+          {acceptsLeft}/{cap} accepts left
         </span>
       </div>
 
@@ -142,15 +182,17 @@ export function CalendarScreen() {
 }
 
 function GoalsPillRow({
+  goals,
   kpis,
   stakeholders,
   onTap,
 }: {
+  goals: QuarterlyGoal[];
   kpis: Kpis;
   stakeholders: Stakeholder[];
   onTap: () => void;
 }) {
-  const hits = STAGE1_GOALS.filter((g) =>
+  const hits = goals.filter((g) =>
     isGoalAchieved(g, goalCurrentValue(g, kpis, stakeholders)),
   ).length;
   return (
@@ -163,7 +205,7 @@ function GoalsPillRow({
         Goals
       </span>
       <div className="flex items-center gap-1.5 flex-1 min-w-0">
-        {STAGE1_GOALS.map((g) => {
+        {goals.map((g) => {
           const v = goalCurrentValue(g, kpis, stakeholders);
           const ok = isGoalAchieved(g, v);
           return (
@@ -176,7 +218,7 @@ function GoalsPillRow({
         })}
       </div>
       <span className="text-[11px] font-bold text-ink-600 tabular-nums shrink-0">
-        {hits}/{STAGE1_GOALS.length}
+        {hits}/{goals.length}
       </span>
       <Icon name="chevron-right" size={13} className="text-ink-400 shrink-0" />
     </button>

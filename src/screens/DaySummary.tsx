@@ -17,6 +17,7 @@ const CONFETTI = Array.from({ length: 22 }, (_, i) => ({
 export function DaySummary() {
   const result = useGame((s) => s.lastResult);
   const day = useGame((s) => s.day);
+  const stage = useGame((s) => s.stage);
   const continueToNextDay = useGame((s) => s.continueToNextDay);
   const resetGame = useGame((s) => s.resetGame);
   const setScreen = useGame((s) => s.setScreen);
@@ -52,7 +53,7 @@ export function DaySummary() {
 
       <div className="px-5 pt-4 pb-2 flex items-center justify-between relative">
         <div className="text-[10.5px] font-semibold uppercase tracking-widest text-ink-400">
-          Stage 1 · Day {day}
+          Stage {stage} · Day {day}
         </div>
         <button onClick={resetGame} className="text-[11px] text-ink-400 hover:text-ink-600">
           Restart

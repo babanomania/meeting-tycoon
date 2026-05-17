@@ -26,7 +26,9 @@ import {
   CHAOS_EVENTS,
   MEETING_TYPES,
   STAGE1_GOALS,
+  capFor,
   requestsForDay,
+  stageGoalsFor,
 } from './data';
 import {
   DM_PROFILES,
@@ -50,6 +52,13 @@ const STARTING_KPIS: Kpis = {
 };
 
 const STAGE1_LAST_DAY = 5;
+const STAGE2_LAST_DAY = 10;
+/**
+ * Legacy constant — still exported for older callers that hard-coded "5".
+ * New code should call `capFor(stage)` instead. The Stage 2 transition
+ * drops the cap to 4 and that change must be observed everywhere the UI
+ * shows "accepts left", or the player will misread the calendar load.
+ */
 const DAILY_ACCEPT_CAP = 5;
 
 const clamp = (n: number) => Math.max(0, Math.min(100, n));
@@ -71,7 +80,11 @@ const sumDeltas = (a: KpiDelta, b: KpiDelta): KpiDelta => {
   return out;
 };
 
-const checkGameOver = (k: Kpis): GameOver | null => {
+const checkGameOver = (
+  k: Kpis,
+  stakeholders: Stakeholder[],
+  stage: 1 | 2 | 3 | 4 | 5,
+): GameOver | null => {
   if (k.morale <= 10) {
     return {
       reason: 'team-walkout',
@@ -96,6 +109,20 @@ const checkGameOver = (k: Kpis): GameOver | null => {
       body: 'You scheduled a meeting with yourself, attended it, and did not come back. People Ops calls this "wellness".',
     };
   }
+  // ── Stage 2+ political failure: if too many stakeholders sour on you,
+  //    you don't get fired — you get *restructured*. The plan calls this
+  //    "the most corporate way to lose."
+  if (stage >= 2) {
+    const soured = stakeholders.filter((s) => s.relationship <= 50).length;
+    if (soured >= 4) {
+      return {
+        reason: 'restructured',
+        emoji: '🌀',
+        title: "You've Been 'Restructured'",
+        body: 'Leadership felt the org would benefit from "a fresh perspective in your role". You retain the title and lose every responsibility. HR called it "an exciting lateral move".',
+      };
+    }
+  }
   return null;
 };
 
@@ -119,6 +146,14 @@ interface GameState {
   stageUnlocked: 2 | 3 | 4 | 5 | null;
 
   detailUid: string | null;
+
+  // ── Stage 2 daily actions ──
+  /** Player sent the dashboard report today (Stage 2+). Resets at day start. */
+  dashboardSentToday: boolean;
+  /** How many shield-meetings the player blocked today (Stage 2+). Resets at day start. */
+  shieldMeetingsToday: number;
+  /** Whether the Reorg Whispers chaos has been forced once during Stage 2 yet. */
+  reorgForcedThisStage: boolean;
 
   // ── Chat ───────────────────────────────────────────────────────────────
   conversations: Conversation[];
@@ -151,6 +186,10 @@ interface GameState {
   closeDetail: () => void;
   maybeTriggerChaos: () => void;
   resolveChaos: (response: ChaosResponse) => void;
+  /** Stage 2+: block a focus hour. Costs an accept slot, no relationship hit. */
+  scheduleShieldMeeting: () => void;
+  /** Stage 2+: send a dashboard report instead of attending. Once per day. */
+  sendDashboardReport: () => void;
   openConversation: (id: string) => void;
   closeConversation: () => void;
   replyInConversation: (id: string, replyIdx: number) => void;
@@ -377,6 +416,9 @@ export const useGame = create<GameState>()(
       gameOver: null,
       stageUnlocked: null,
       detailUid: null,
+      dashboardSentToday: false,
+      shieldMeetingsToday: 0,
+      reorgForcedThisStage: false,
       conversations: [],
       messages: {},
       openConversationId: null,
@@ -405,7 +447,7 @@ export const useGame = create<GameState>()(
         if (get().acceptedRequestIds.includes(requestId)) return;
 
         const beforeCount = countAcceptsToday(get().acceptedRequestIds);
-        if (beforeCount >= DAILY_ACCEPT_CAP) return;
+        if (beforeCount >= capFor(get().stage)) return;
 
         const type = MEETING_TYPES[req.typeId];
         const start = findFreeSlot(get().schedule, type.durationMin);
@@ -534,12 +576,18 @@ export const useGame = create<GameState>()(
 
         // Politics: declining a stakeholder hits the relationship — scaled by priority.
         const stakeholderId = senderToStakeholder(req.from);
-        const declineDelta =
+        let declineDelta =
           t.priority === 'crisis' ? -14 :
           t.priority === 'high'   ? -10 :
           t.priority === 'recurring' ? -6 :
           t.priority === 'medium' ? -4 :
           -1;
+        // Stage 2+ "Recurring Cost Inflation": declining a recurring meeting is
+        // stickier — your absence broadcasts further when the team's already
+        // under pressure. ×1.5 turns the −6 into −9 (rounded).
+        if (get().stage >= 2 && t.priority === 'recurring') {
+          declineDelta = Math.round(declineDelta * 1.5);
+        }
         const nextStakeholders = stakeholderId
           ? adjustRelationship(get().stakeholders, stakeholderId, declineDelta, `Declined ${t.title}`)
           : get().stakeholders;
@@ -782,6 +830,98 @@ export const useGame = create<GameState>()(
         });
       },
 
+      scheduleShieldMeeting: () => {
+        const s = get();
+        if (s.stage < 2) return;
+        const accepts = countAcceptsToday(s.acceptedRequestIds);
+        if (accepts >= capFor(s.stage)) return;
+        const type = MEETING_TYPES['shield-meeting'];
+        const start = findFreeSlot(s.schedule, type.durationMin);
+        if (start < 0) return;
+
+        const uid = `shield-${Date.now()}`;
+        const now = Date.now();
+
+        // Materialize a meeting chat for the shield so the "You" post lands.
+        const { conversations: convos1, messages: msgs1 } = ensureMeetingChat(
+          'shield-meeting',
+          s.conversations,
+          s.messages,
+          now,
+        );
+        // Group reaction in #engineering.
+        const { conversations: convos2, messages: msgs2 } = applyChatEvent(
+          convos1,
+          msgs1,
+          { type: 'shield-created' },
+        );
+
+        set({
+          schedule: [
+            ...s.schedule,
+            { uid, typeId: 'shield-meeting' as MeetingTypeId, startMinutes: start, from: 'You' },
+          ],
+          // We don't push this into acceptedRequestIds with the "decline:" /
+          // request prefix shape — instead we count shields toward the cap
+          // by reusing the accept ledger with a synthetic id.
+          acceptedRequestIds: [...s.acceptedRequestIds, uid],
+          shieldMeetingsToday: s.shieldMeetingsToday + 1,
+          activityToday: logActivity(s.activityToday, {
+            kind: 'meeting-scheduled',
+            title: 'Blocked focus time',
+            detail: `${type.durationMin}m · no meetings, just work`,
+            from: 'You',
+          }),
+          conversations: convos2,
+          messages: msgs2,
+          toast: {
+            id: `toast-${Date.now()}-shield`,
+            title: 'Blocked · Focus Time',
+            intent: 'success',
+            icon: 'check',
+            kpiDelta: type.impact,
+          },
+        });
+      },
+
+      sendDashboardReport: () => {
+        const s = get();
+        if (s.stage < 2) return;
+        if (s.dashboardSentToday) return;
+
+        // Dashboard report fixed-impact (per plan): +Visibility +5, +ExecConf +3.
+        // No productivity hit — the joke is that you replaced an hour of
+        // discussion with a slide nobody will read.
+        const delta: KpiDelta = { visibility: +5, executiveConfidence: +3 };
+
+        // #leadership applauds the deck.
+        const { conversations: convos2, messages: msgs2 } = applyChatEvent(
+          s.conversations,
+          s.messages,
+          { type: 'dashboard-sent' },
+        );
+
+        set({
+          kpis: applyDelta(s.kpis, delta),
+          dashboardSentToday: true,
+          activityToday: logActivity(s.activityToday, {
+            kind: 'ping-replied',
+            title: 'Sent dashboard report',
+            detail: 'Numbers shipped. Discussion skipped.',
+            from: 'You',
+          }),
+          conversations: convos2,
+          messages: msgs2,
+          toast: {
+            id: `toast-${Date.now()}-dash`,
+            title: 'Sent · Dashboard Report',
+            intent: 'success',
+            icon: 'send',
+            kpiDelta: delta,
+          },
+        });
+      },
+
       endDay: () => {
         const s = get();
         const sched = s.schedule;
@@ -800,7 +940,7 @@ export const useGame = create<GameState>()(
         // and chaos meetings DON'T count as "accepts" — only the active accepts
         // the player explicitly made today.
         const acceptsToday = countAcceptsToday(s.acceptedRequestIds);
-        const unusedSlots = Math.max(0, DAILY_ACCEPT_CAP - acceptsToday);
+        const unusedSlots = Math.max(0, capFor(s.stage) - acceptsToday);
         const restDelta: KpiDelta = unusedSlots > 0
           ? {
               productivity: unusedSlots * 2,
@@ -832,7 +972,7 @@ export const useGame = create<GameState>()(
           boss: feedback,
         };
 
-        const over = checkGameOver(nextKpis);
+        const over = checkGameOver(nextKpis, s.stakeholders, s.stage);
 
         // Fire post-meeting messages in each meeting chat.
         const { conversations: convos1, messages: msgs1 } = fireMeetingHeldMessages(
@@ -864,6 +1004,18 @@ export const useGame = create<GameState>()(
       continueToNextDay: () => {
         const s = get();
         const finishedStage1 = s.stage === 1 && s.day >= STAGE1_LAST_DAY;
+        const finishedStage2 = s.stage === 2 && s.day >= STAGE2_LAST_DAY;
+        const nextStage: 1 | 2 | 3 | 4 | 5 = finishedStage1
+          ? 2
+          : finishedStage2
+          ? 3
+          : s.stage;
+        const stageChanged = nextStage !== s.stage;
+        const stageUnlocked: 2 | 3 | 4 | 5 | null = finishedStage1
+          ? 2
+          : finishedStage2
+          ? 3
+          : null;
 
         const recurringCarry: ScheduledMeeting[] = s.schedule
           .filter((m) => m.recurring)
@@ -892,17 +1044,42 @@ export const useGame = create<GameState>()(
         convos = dayStartFx.conversations;
         msgs = dayStartFx.messages;
 
+        // ── Stage 2 Reorg Whispers ────────────────────────────────────────
+        // On any Stage 2 day from day 7 onward, roll a 40% chance to
+        // force-fire the reorg-announce chaos. If we hit day 10 without
+        // ever firing, force it on the last day so every Stage 2 run
+        // experiences the reorg at least once.
+        let nextActiveChaos = null as { id: string; uid: string } | null;
+        let nextReorgForced = stageChanged ? false : s.reorgForcedThisStage;
+        const nextDay = s.day + 1;
+        if (nextStage === 2 && !nextReorgForced) {
+          const shouldForce =
+            (nextDay >= 7 && Math.random() < 0.4) || nextDay === STAGE2_LAST_DAY;
+          if (shouldForce) {
+            nextActiveChaos = {
+              id: 'reorg-announce',
+              uid: `chaos-${Date.now()}-reorg`,
+            };
+            nextReorgForced = true;
+          }
+        }
+
         set({
-          day: s.day + 1,
-          stage: finishedStage1 ? 2 : s.stage,
-          stageUnlocked: finishedStage1 ? 2 : null,
+          day: nextDay,
+          stage: nextStage,
+          stageUnlocked,
           schedule: recurringCarry,
           acceptedRequestIds: recurringAcceptedIds,
           lastResult: null,
           screen: 'calendar',
-          activeChaos: null,
+          activeChaos: nextActiveChaos,
           triggeredChaosIds: [],
           chaosDelta: {},
+          // Reset Stage 2 daily actions every day; reset the "once per stage"
+          // reorg flag when the stage changes.
+          dashboardSentToday: false,
+          shieldMeetingsToday: 0,
+          reorgForcedThisStage: nextReorgForced,
           activityToday: recurringCarry.length
             ? recurringCarry.map((m, i) => ({
                 id: `dayseed-${Date.now()}-${i}`,
@@ -942,6 +1119,9 @@ export const useGame = create<GameState>()(
           gameOver: null,
           stageUnlocked: null,
           detailUid: null,
+          dashboardSentToday: false,
+          shieldMeetingsToday: 0,
+          reorgForcedThisStage: false,
           conversations: [],
           messages: {},
           openConversationId: null,
@@ -975,7 +1155,10 @@ export const useGame = create<GameState>()(
     }),
     {
       name: 'meeting-tycoon-save',
-      version: 9,
+      // Bumped for Stage 2: new state fields (dashboardSentToday,
+      // shieldMeetingsToday, reorgForcedThisStage) + new game-over reason
+      // would otherwise round-trip from stale saves.
+      version: 10,
       migrate: () => undefined,
     },
   ),
@@ -996,12 +1179,13 @@ function pickBossFeedback(
   // s.kpis because the boss reacts to the NEW state, not yesterday's.
   const k = postKpis;
   const boss = s.stakeholders.find((x) => x.id === 'boss');
+  const goals = stageGoalsFor(s.stage);
   const goalValue = (g: typeof STAGE1_GOALS[number]): number => {
     if (g.kpi) return k[g.kpi];
     if (g.stakeholderId) return s.stakeholders.find((x) => x.id === g.stakeholderId)?.relationship ?? 0;
     return 0;
   };
-  const hitGoals = STAGE1_GOALS.filter((g) => {
+  const hitGoals = goals.filter((g) => {
     const v = goalValue(g);
     return g.lowerIsBetter ? v <= g.target : v >= g.target;
   }).length;
@@ -1040,7 +1224,7 @@ function pickBossFeedback(
       text: `${characterDisplayName(boss.name)} is your biggest fan today. The "high performer" rumor is circulating.`,
     };
   }
-  if (hitGoals === STAGE1_GOALS.length) {
+  if (hitGoals === goals.length) {
     return {
       emoji: '🙌',
       text: 'All quarterly goals on track. The CFO sent a 🙏 emoji. That is rare.',
@@ -1049,7 +1233,7 @@ function pickBossFeedback(
   if (hitGoals >= 3) {
     return {
       emoji: '🙂',
-      text: `Solid progress — ${hitGoals}/${STAGE1_GOALS.length} quarterly goals hit. Keep doing whatever you are doing.`,
+      text: `Solid progress — ${hitGoals}/${goals.length} quarterly goals hit. Keep doing whatever you are doing.`,
     };
   }
 
@@ -1073,4 +1257,4 @@ function pickBossFeedback(
   };
 }
 
-export { STARTING_KPIS, applyDelta, STAGE1_LAST_DAY, DAILY_ACCEPT_CAP };
+export { STARTING_KPIS, applyDelta, STAGE1_LAST_DAY, STAGE2_LAST_DAY, DAILY_ACCEPT_CAP };

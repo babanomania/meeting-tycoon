@@ -88,6 +88,11 @@ export const MEETING_CHAT_META: Record<MeetingTypeId, { participants: string[] }
   'eng-escalation':  { participants: ['CTO', 'Alex P.', 'Dev S.'] },
   'culture-sync':    { participants: ['HR', 'Sam T.', 'Pat L.'] },
   'pr-cleanup':      { participants: ['CHRO', 'CFO', 'VP Strategy'] },
+  // ── Stage 2 ──
+  'shield-meeting':  { participants: ['You'] },
+  'board-pre-read':  { participants: ['CFO', 'CEO', 'You'] },
+  'quarterly-review': { participants: ['CEO', 'CFO', 'VP Strategy', 'You'] },
+  'reorg-meeting':   { participants: ['CEO', 'CHRO', 'You'] },
 };
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -421,6 +426,58 @@ export const EVENT_REACTIONS: Array<{
       },
     ],
   },
+
+  // ── Stage 2 events ─────────────────────────────────────────────────────
+  // Shield Meeting — engineering team notices a manager actually defending
+  // focus time. Suspicious, refreshing, possibly contagious.
+  {
+    match: (e) => e.type === 'shield-created',
+    reactions: [
+      {
+        conversationId: 'group-engineering',
+        sender: 'Riya K.',
+        body: () => 'manager blocked focus time. wild.',
+        reactions: ['🛡️', '🙏'],
+      },
+    ],
+  },
+  // Dashboard Report — leadership receives the deck. Confidence theater works.
+  {
+    match: (e) => e.type === 'dashboard-sent',
+    reactions: [
+      {
+        conversationId: 'group-leadership',
+        sender: 'CEO',
+        body: () => 'got the dashboard. numbers look 📈',
+        reactions: ['📈', '🙏'],
+      },
+    ],
+  },
+  // Reorg announcement chaos resolved — #general becomes a panic channel
+  // regardless of how the player responded. The reorg itself is the event.
+  {
+    match: (e) => e.type === 'chaos-resolved' && e.chaosId === 'reorg-announce',
+    reactions: [
+      {
+        conversationId: 'group-general',
+        sender: 'Sam T.',
+        body: () => 'wait what just happened. what team am I on now',
+        reactions: ['😱', '💀', '🌀'],
+      },
+      {
+        conversationId: 'group-engineering',
+        sender: 'Dev S.',
+        body: () => 'updating slack bio: "TBD"',
+        reactions: ['💀', '🫠'],
+      },
+      {
+        conversationId: 'group-culture',
+        sender: 'People Bot',
+        body: () => 'wellness resources have been updated. (they are the same resources)',
+        reactions: ['🫠'],
+      },
+    ],
+  },
 ];
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -480,6 +537,22 @@ export const MEETING_HELD_TEMPLATES: Partial<
   ],
   'pr-cleanup': [
     { sender: 'CHRO', body: 'statement drafted. lawyers approved. crisis averted (probably).' },
+  ],
+  // ── Stage 2 ──
+  'shield-meeting': [
+    { sender: 'You', body: 'focus block held. shipped two PRs. nobody died.', reactions: ['🛡️', '🚀'] },
+  ],
+  'board-pre-read': [
+    { sender: 'CFO', body: 'pre-read pre-read complete. ready to be re-read tomorrow.', reactions: ['📑'] },
+    { sender: 'CEO', body: 'love the deck. love the deck about the deck more.' },
+  ],
+  'quarterly-review': [
+    { sender: 'VP Strategy', body: 'QBR done. Q3 was "directionally aligned".', reactions: ['📊', '🙏'] },
+    { sender: 'CFO', body: 'numbers will be revised. quietly.' },
+  ],
+  'reorg-meeting': [
+    { sender: 'CHRO', body: 'thanks everyone for the energy. wellness resources are in the doc.' },
+    { sender: 'Marcus W.', body: 'so... do I have a team. asking generally.', reactions: ['💀', '🌀'] },
   ],
 };
 

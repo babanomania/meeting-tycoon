@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useGame, STARTING_KPIS } from '@/game/store';
-import { COMPANY, STAGE1_GOALS } from '@/game/data';
+import { COMPANY, stageGoalsFor } from '@/game/data';
 import { KPI_META } from '@/components/KpiBadge';
 import { Icon } from '@/components/Icon';
 import { Avatar } from '@/components/Avatar';
@@ -47,6 +47,8 @@ export function Home() {
     return map;
   }, [stakeholders]);
 
+  const goals = useMemo(() => stageGoalsFor(stage), [stage]);
+
   const chatPulse = useMemo(() => {
     const out: Array<{ msg: ChatMessage; channel: string }> = [];
     for (const c of conversations) {
@@ -75,7 +77,7 @@ export function Home() {
 
       <div className="flex-1 overflow-y-auto phone-scroll px-5 py-4 space-y-4">
         {/* 1. Company Hero */}
-        <CompanyHero kpis={kpis} stakeholders={stakeholders} day={day} />
+        <CompanyHero kpis={kpis} stakeholders={stakeholders} day={day} stage={stage} />
 
         {/* 2. Quarterly Goals */}
         <motion.div
@@ -89,14 +91,14 @@ export function Home() {
               Quarterly Goals
             </div>
             <span className="text-[11px] font-semibold text-ink-500 tabular-nums">
-              {STAGE1_GOALS.filter((g) =>
+              {goals.filter((g) =>
                 isGoalAchieved(g, goalCurrentValue(g, kpis, stakeholders)),
               ).length}{' '}
-              / {STAGE1_GOALS.length} hit
+              / {goals.length} hit
             </span>
           </div>
           <ul className="space-y-1.5">
-            {STAGE1_GOALS.map((g) => {
+            {goals.map((g) => {
               const v = goalCurrentValue(g, kpis, stakeholders);
               const ok = isGoalAchieved(g, v);
               return (
@@ -239,15 +241,20 @@ function CompanyHero({
   kpis,
   stakeholders,
   day,
+  stage,
 }: {
   kpis: Kpis;
   stakeholders: Stakeholder[];
   day: number;
+  stage: number;
 }) {
   const dayLabel = useMemo(() => {
     const names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
     return names[(day - 1) % 5];
   }, [day]);
+
+  // Stage 2 = days 6-10, so within-stage day = ((day - 1) % 5) + 1.
+  const dayInStage = ((day - 1) % 5) + 1;
 
   const vibe = useMemo(() => generateVibe(kpis, stakeholders), [kpis, stakeholders]);
 
@@ -277,7 +284,7 @@ function CompanyHero({
       <div className="mt-3 pt-3 border-t border-white/15 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="text-[10.5px] font-semibold uppercase tracking-widest text-white/70">
-            {dayLabel} · Day {day} of 5
+            {dayLabel} · Stage {stage} · Day {dayInStage} of 5
           </div>
           <div className="text-[13px] font-medium text-white/95 mt-0.5 leading-snug">
             {vibe}

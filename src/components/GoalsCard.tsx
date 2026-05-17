@@ -9,11 +9,18 @@ interface Props {
 
 /** Map quarterly goal id → icon name. Avoids leaking emoji strings to the UI. */
 const GOAL_ICON: Record<string, IconName> = {
+  // Stage 1
   'g-boss':       'briefcase',
   'g-alignment':  'compass',
   'g-visibility': 'eye',
   'g-burnout':    'fire',
   'g-confidence': 'star',
+  // Stage 2
+  'g2-visibility': 'eye',
+  'g2-boss':       'briefcase',
+  'g2-chro':       'people',
+  'g2-prod':       'sparkle',
+  'g2-burnout':    'fire',
 };
 
 /** Read the current value behind a goal — KPI or stakeholder relationship. */

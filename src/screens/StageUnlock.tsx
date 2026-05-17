@@ -20,12 +20,22 @@ const STAGE_META: Record<number, StageMeta> = {
   2: {
     name: 'Welcome to Reality',
     tagline:
-      'The honeymoon is over. More people, more meetings, more chaos.',
+      'The honeymoon is over. 8 requests a day, 4 slots to spend, one reorg waiting in the wings. You finally get defensive tools.',
     unlocks: [
-      { icon: 'inbox',    title: 'Inbox Overload',     sub: 'Requests never stop coming.' },
-      { icon: 'clock',    title: 'Recurring Meetings', sub: 'Set it once. Regret it forever.' },
-      { icon: 'shield',   title: 'Shield Meeting',     sub: 'Block focus time. Or pretend to.' },
-      { icon: 'reports',  title: 'Dashboard Reports',  sub: 'Turn data into beautiful lies.' },
+      { icon: 'inbox',   title: 'Inbox Overload',      sub: '8 requests/day · accept cap drops to 4. Forced rejection.' },
+      { icon: 'shield',  title: 'Shield Meeting',      sub: 'Block 60 min of focus time. No relationship cost.' },
+      { icon: 'send',    title: 'Dashboard Report',    sub: 'Send a deck instead of attending. +Visibility, no Productivity hit. Once per day.' },
+      { icon: 'fire',    title: 'Reorg Whispers',      sub: 'One day this stage, a Reorg Announcement will fire whether you like it or not.' },
+    ],
+  },
+  3: {
+    name: 'Bureaucracy Awaits',
+    tagline:
+      'Approval chains, executive escalations, scheduling conflicts. Stage 3 is being built.',
+    unlocks: [
+      { icon: 'people',   title: 'Approval Chains',    sub: 'Some requests need 3 of 5 stakeholders to sign off first.' },
+      { icon: 'arrow-up', title: 'Pass to Boss',       sub: 'Punt a crisis upward. Costs relationship. Coming soon.' },
+      { icon: 'alert',    title: 'Scheduling Conflicts', sub: 'Two requests, one slot. Pick one. Coming soon.' },
     ],
   },
 };
@@ -119,10 +129,12 @@ export function StageUnlock() {
       <div className="flex-1" />
 
       <div className="px-5 pb-6 pt-3 space-y-2">
-        <p className="text-center text-[11px] text-ink-400">
-          (Full Stage {stageUnlocked} content arrives in the next build. For now, the same loop with
-          mounting absurdity.)
-        </p>
+        {stageUnlocked >= 3 && (
+          <p className="text-center text-[11px] text-ink-400">
+            (Stage {stageUnlocked} mechanics are still in development. For now, expect Stage 2's pressure with
+            mounting absurdity.)
+          </p>
+        )}
         <button
           onClick={() => {
             clear();

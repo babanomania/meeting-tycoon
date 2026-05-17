@@ -27,7 +27,12 @@ export type MeetingTypeId =
   | 'design-review'
   | 'eng-escalation'
   | 'culture-sync'
-  | 'pr-cleanup';
+  | 'pr-cleanup'
+  // ── Stage 2 mechanics ──
+  | 'shield-meeting'   // defensive self-block, +Prod +Morale, no relationship impact
+  | 'board-pre-read'   // CFO/Board high-pressure prep
+  | 'quarterly-review' // QBR slide deck rush
+  | 'reorg-meeting';   // forced reorg announcement attendance
 
 export interface MeetingType {
   id: MeetingTypeId;
@@ -170,7 +175,10 @@ export type ChatEvent =
   | { type: 'meeting-held'; meetingTypeId: MeetingTypeId }
   | { type: 'chaos-resolved'; chaosId: string; response: 'attend' | 'delegate' | 'reschedule' }
   | { type: 'day-end'; kpis: Kpis; meetingsHeld: number; unusedSlots: number }
-  | { type: 'day-start'; day: number };
+  | { type: 'day-start'; day: number }
+  // ── Stage 2 events ──
+  | { type: 'shield-created' }       // player blocked their own calendar
+  | { type: 'dashboard-sent' };      // player sent a dashboard report instead of attending
 
 export type ActivityKind =
   | 'meeting-scheduled'
@@ -236,7 +244,8 @@ export type Sentiment = 'hostile' | 'cool' | 'neutral' | 'friendly' | 'champion'
 export type GameOverReason =
   | 'team-walkout'
   | 'fired-low-confidence'
-  | 'burnout-sabbatical';
+  | 'burnout-sabbatical'
+  | 'restructured';
 
 export interface GameOver {
   reason: GameOverReason;

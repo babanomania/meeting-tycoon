@@ -1,4 +1,4 @@
-import type { ChaosEvent, MeetingType, MeetingRequest, QuarterlyGoal } from './types';
+import type { ChaosEvent, MeetingType, MeetingRequest, QuarterlyGoal, StageId } from './types';
 
 export const COMPANY = {
   name: 'Acme Corp',
@@ -184,6 +184,50 @@ export const MEETING_TYPES: Record<string, MeetingType> = {
     impact: { executiveConfidence: +10, visibility: +5, productivity: -8, burnout: +4, morale: -3 },
     flavor: 'Someone tweeted. Lawyers are involved.',
   },
+
+  // ── Stage 2 mechanics ──────────────────────────────────────────────────────
+  'shield-meeting': {
+    id: 'shield-meeting',
+    title: 'Focus Time (Blocked)',
+    durationMin: 60,
+    attendees: 1,
+    priority: 'low',
+    emoji: '🛡️',
+    // Purely defensive: pay one accept slot, take no relationship hit,
+    // and let the team actually work.
+    impact: { productivity: +6, morale: +2, burnout: -3 },
+    flavor: 'You blocked your own calendar. Revolutionary.',
+  },
+  'board-pre-read': {
+    id: 'board-pre-read',
+    title: 'Board Pre-read Prep',
+    durationMin: 90,
+    attendees: 4,
+    priority: 'high',
+    emoji: '📑',
+    impact: { executiveConfidence: +8, visibility: +6, productivity: -6, burnout: +4, morale: -2 },
+    flavor: 'Reading a deck about reading a deck.',
+  },
+  'quarterly-review': {
+    id: 'quarterly-review',
+    title: 'Quarterly Business Review',
+    durationMin: 90,
+    attendees: 10,
+    priority: 'high',
+    emoji: '📊',
+    impact: { visibility: +10, executiveConfidence: +6, alignment: +3, productivity: -7, burnout: +3 },
+    flavor: 'Where last quarter\'s reality meets next quarter\'s story.',
+  },
+  'reorg-meeting': {
+    id: 'reorg-meeting',
+    title: 'Reorg Announcement',
+    durationMin: 60,
+    attendees: 23,
+    priority: 'crisis',
+    emoji: '🌀',
+    impact: { visibility: +4, alignment: -6, morale: -8, executiveConfidence: -3, burnout: +5 },
+    flavor: 'New boxes on the org chart. Same people inside them. Maybe.',
+  },
 };
 
 /**
@@ -230,6 +274,59 @@ export const REQUEST_POOL: Record<number, MeetingRequest[]> = {
     { uid: 'd5-r4', typeId: 'all-hands', from: 'CEO', note: 'Weekly closer. Possibly an announcement.' },
     { uid: 'd5-r5', typeId: 'culture-sync', from: 'HR', note: 'Mandatory cake. Mandatory enthusiasm.' },
     { uid: 'd5-r6', typeId: 'budget-review', from: 'CFO', note: 'Reviewing what the review revealed.' },
+  ],
+
+  // ── Stage 2 (Days 6-10) — 8 requests/day, accept cap 4. Forced rejection.
+  //    Cast leans on CEO / CFO / CTO with board-prep + QBR pressure.
+  6: [
+    { uid: 'd6-r1', typeId: 'standup', from: 'Engineering', note: 'Monday standup. Half the team is "WFH".' },
+    { uid: 'd6-r2', typeId: 'board-pre-read', from: 'CFO', note: 'Board reads on Thursday. Slides due tomorrow.' },
+    { uid: 'd6-r3', typeId: 'quarterly-review', from: 'CEO', note: 'QBR prep. Numbers will be "contextualized".' },
+    { uid: 'd6-r4', typeId: 'eng-escalation', from: 'CTO', note: 'Prod is fine. Raj is not. He needs an hour.' },
+    { uid: 'd6-r5', typeId: 'okr-checkin', from: 'VP Strategy', note: 'Mid-quarter pulse. "Aspirational" targets being trimmed.' },
+    { uid: 'd6-r6', typeId: '1on1', from: 'Your Boss', note: 'Monday check-in. Word "alignment" expected 4+ times.' },
+    { uid: 'd6-r7', typeId: 'all-hands', from: 'HR', note: 'Mandatory. New benefits announcement (it is one benefit).' },
+    { uid: 'd6-r8', typeId: 'culture-sync', from: 'People Ops', note: 'Post-weekend vibes check. Pre-reorg jitters.' },
+  ],
+  7: [
+    { uid: 'd7-r1', typeId: 'standup', from: 'Engineering', note: 'Tuesday. Someone wrote "no blockers" again.' },
+    { uid: 'd7-r2', typeId: 'budget-review', from: 'CFO', note: 'Spend is "interesting". Diana wants explanations.' },
+    { uid: 'd7-r3', typeId: 'pre-read-sync', from: 'Strategy', note: 'Pre-reading the pre-read for the board pre-read.' },
+    { uid: 'd7-r4', typeId: 'design-review', from: 'Design', note: 'New onboarding flow. Bring tasteful opinions.' },
+    { uid: 'd7-r5', typeId: 'stakeholder-sync', from: 'Sales', note: 'Pat L. wants "5 min". It will be 45.' },
+    { uid: 'd7-r6', typeId: 'retro', from: 'Engineering', note: 'Three stickies. Two say "comms". One says "?".' },
+    { uid: 'd7-r7', typeId: 'board-pre-read', from: 'CFO', note: 'Round 2. Slides "need work".' },
+    { uid: 'd7-r8', typeId: 'town-hall', from: 'CEO', note: 'All-hands tomorrow needs a warm-up town hall today.' },
+  ],
+  8: [
+    { uid: 'd8-r1', typeId: 'standup', from: 'Engineering', note: 'Wednesday. Standup energy: declining.' },
+    { uid: 'd8-r2', typeId: 'quarterly-review', from: 'CEO', note: 'QBR day. Slide 12 needs you specifically.' },
+    { uid: 'd8-r3', typeId: 'pr-cleanup', from: 'Legal', note: 'CEO previewed numbers on a podcast. Lawyers calling.' },
+    { uid: 'd8-r4', typeId: 'eng-escalation', from: 'CTO', note: 'Raj is now "concerned about velocity". Hour minimum.' },
+    { uid: 'd8-r5', typeId: 'okr-checkin', from: 'VP Strategy', note: 'OKRs are now KORs. They sound better.' },
+    { uid: 'd8-r6', typeId: 'strategy-offsite', from: 'Leadership', note: 'Surprise offsite added. 2 hours. Lunch included.' },
+    { uid: 'd8-r7', typeId: '1on1', from: 'Your Boss', note: '"Just a vibe check." It will not be.' },
+    { uid: 'd8-r8', typeId: 'all-hands', from: 'CEO', note: 'QBR readout. Cameras on, enthusiasm mandatory.' },
+  ],
+  9: [
+    { uid: 'd9-r1', typeId: 'standup', from: 'Engineering', note: 'Thursday standup. Riya skipped. Tension.' },
+    { uid: 'd9-r2', typeId: 'project-kickoff', from: 'Product', note: 'Q4 initiative. Already 2 weeks late.' },
+    { uid: 'd9-r3', typeId: 'budget-review', from: 'CFO', note: 'Re-reviewing yesterday\'s review. Numbers changed.' },
+    { uid: 'd9-r4', typeId: 'retro', from: 'Engineering', note: 'Weekly retro. "More retros" suggested unironically.' },
+    { uid: 'd9-r5', typeId: 'board-pre-read', from: 'CFO', note: 'Final round. Board reads in 24 hours.' },
+    { uid: 'd9-r6', typeId: 'culture-sync', from: 'HR', note: 'Reorg rumors discussed at the coffee machine.' },
+    { uid: 'd9-r7', typeId: 'town-hall', from: 'CEO', note: 'Town hall tomorrow. CEO "has news".' },
+    { uid: 'd9-r8', typeId: 'stakeholder-sync', from: 'Marketing', note: 'Brand re-aligning around the realignment.' },
+  ],
+  10: [
+    { uid: 'd10-r1', typeId: 'standup', from: 'Engineering', note: 'Friday standup. Friday energy: nonexistent.' },
+    { uid: 'd10-r2', typeId: 'all-hands', from: 'CEO', note: 'Week-closer. Possibly a reorg announcement.' },
+    { uid: 'd10-r3', typeId: 'retro', from: 'Product', note: 'Week retro. Bring resilience.' },
+    { uid: 'd10-r4', typeId: 'eng-escalation', from: 'CTO', note: 'Same prod issue, new name.' },
+    { uid: 'd10-r5', typeId: 'quarterly-review', from: 'CFO', note: 'QBR debrief. Diana has notes.' },
+    { uid: 'd10-r6', typeId: 'strategy-offsite', from: 'Leadership', note: 'Reorg planning offsite. Hush-hush.' },
+    { uid: 'd10-r7', typeId: 'board-pre-read', from: 'CFO', note: 'Weekend reading. Diana said "thanks in advance".' },
+    { uid: 'd10-r8', typeId: 'culture-sync', from: 'HR', note: 'Mandatory cake. Possibly farewell cake.' },
   ],
 };
 
@@ -296,6 +393,46 @@ export const CHAOS_EVENTS: ChaosEvent[] = [
     delegateImpact: { productivity: -2, executiveConfidence: -3, alignment: -2 },
     rescheduleImpact: { productivity: +2, executiveConfidence: -6, visibility: -3 },
   },
+
+  // ── Stage 2 chaos events ────────────────────────────────────────────────
+  {
+    id: 'reorg-announce',
+    emoji: '🌀',
+    title: 'Reorg Announced at All-Hands',
+    fromWho: 'CEO',
+    durationMin: 60,
+    attendees: 'Whole company',
+    flavor: 'Teams are being "realigned". Boxes on the org chart are shuffling. Your name is on a slide.',
+    // Attending is mandatory politics; declining is career-ending. All paths
+    // hurt — the question is who you hurt and how much.
+    attendImpact: { morale: -8, alignment: -6, executiveConfidence: +6, visibility: +5, burnout: +4 },
+    delegateImpact: { morale: -4, alignment: -8, executiveConfidence: -12, visibility: -4 },
+    rescheduleImpact: { morale: -6, alignment: -10, executiveConfidence: -18, visibility: -6 },
+  },
+  {
+    id: 'quarterly-surprise',
+    emoji: '📊',
+    title: 'CEO: "QBR Slides by EOD?"',
+    fromWho: 'CEO',
+    durationMin: 60,
+    attendees: 'You, alone, in a doc',
+    flavor: 'Marcus wants a "punchy" deck for the board call he just remembered.',
+    attendImpact: { visibility: +10, executiveConfidence: +8, productivity: -8, burnout: +5, morale: -3 },
+    delegateImpact: { visibility: -2, executiveConfidence: -8, productivity: +2, morale: +1 },
+    rescheduleImpact: { visibility: -5, executiveConfidence: -12, alignment: -3, morale: +2 },
+  },
+  {
+    id: 'two-town-halls',
+    emoji: '🏛️',
+    title: 'Two Town Halls. Both Mandatory.',
+    fromWho: 'CEO & CHRO',
+    durationMin: 90,
+    attendees: 'Everyone, twice',
+    flavor: 'CEO scheduled one. CHRO scheduled one. Neither knew. Both are "non-negotiable".',
+    attendImpact: { visibility: +12, productivity: -12, morale: -6, burnout: +6 },
+    delegateImpact: { visibility: -3, executiveConfidence: -6, morale: +2 },
+    rescheduleImpact: { visibility: -6, executiveConfidence: -10, alignment: -4, morale: +3 },
+  },
 ];
 
 /** Stage 1 quarterly goals — visible on Overview as progress bars. */
@@ -306,6 +443,43 @@ export const STAGE1_GOALS: QuarterlyGoal[] = [
   { id: 'g-burnout',    label: 'Keep Burnout Sustainable', kpi: 'burnout',       emoji: '🔥', target: 60, lowerIsBetter: true },
   { id: 'g-confidence', label: 'Win the Strategy Award',  kpi: 'executiveConfidence', emoji: '🏆', target: 65 },
 ];
+
+/**
+ * Stage 2 quarterly goals — the bar moves: Visibility becomes harder, Boss
+ * trust matters more, Burnout cap loosens to acknowledge the pressure, and
+ * we add a CHRO-anchored "Survive the Reorg" check (the people lead being
+ * happy with you is the most honest reorg-survival signal we can model).
+ */
+export const STAGE2_GOALS: QuarterlyGoal[] = [
+  { id: 'g2-visibility', label: 'Hit Visibility Target',  kpi: 'visibility',     emoji: '👁️', target: 70 },
+  { id: 'g2-boss',       label: 'Maintain Boss Trust',    stakeholderId: 'boss', emoji: '🤝', target: 65 },
+  { id: 'g2-chro',       label: 'Survive the Reorg',      stakeholderId: 'chro', emoji: '🌀', target: 55 },
+  { id: 'g2-prod',       label: 'Sustain Output',         kpi: 'productivity',   emoji: '🚀', target: 35 },
+  { id: 'g2-burnout',    label: "Don't Implode",          kpi: 'burnout',        emoji: '🔥', target: 65, lowerIsBetter: true },
+];
+
+/** Stage → quarterly goal set. Falls back to Stage 1 for stages not built yet. */
+export function stageGoalsFor(stage: StageId): QuarterlyGoal[] {
+  if (stage === 2) return STAGE2_GOALS;
+  return STAGE1_GOALS;
+}
+
+/**
+ * Stage → daily accept cap. The Stage 2 drop from 5 → 4 is the single most
+ * felt change of the stage transition; once it lands, every "yes" forces a
+ * "no" somewhere else.
+ */
+export function capFor(stage: StageId): number {
+  if (stage >= 2) return 4;
+  return 5;
+}
+
+/**
+ * Stage 2-only chaos pool. Reorg Whispers fires *one* of these on a random
+ * Stage 2 day regardless of accept count — see store.maybeTriggerChaos /
+ * continueToNextDay for the trigger.
+ */
+export const STAGE2_FORCED_CHAOS_IDS = ['reorg-announce'] as const;
 
 /** Boss feedback rules — picked by KPI delta scoring after Day 1. */
 export const BOSS_FEEDBACK_RULES: Array<{
