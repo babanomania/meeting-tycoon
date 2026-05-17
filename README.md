@@ -3,52 +3,147 @@
 > A satirical corporate management sim. Schedule meetings. Survive politics. Maintain the illusion.
 
 <p align="center">
-  <img src="docs/assets/hero.svg" alt="Meeting Tycoon — a mobile-styled calendar overflowing with meetings, KPI chips, and a panicked Slack message from engineering" width="100%">
+  <img src="docs/assets/hero.svg" alt="Meeting Tycoon — a full-week corporate calendar absurdly overbooked, with notification toasts bursting from the edges" width="100%">
 </p>
 
 <p align="center">
   <a href="https://babanomania.github.io/meeting-tycoon/"><strong>▶ Play now</strong></a>
-  · auto-deployed from <code>main</code> via GitHub Pages
+  &nbsp;·&nbsp;
+  <a href="./GAMEPLAY.md">How it works</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/babanomania/meeting-tycoon/issues">Report a bug</a>
 </p>
 
-You play a new manager at **Acme Corp**, a 23-person company that holds 127
-meetings a week and spends 2% of its time on actual work. Your job: triage an
-inbox of meeting requests, defend your calendar, keep six leadership
-stakeholders happy, and survive the slow descent from "promising new manager"
-to "VP". Each day plays in about 90 seconds. Each stage adds one new mechanic
-designed to make the last stage's mechanics harder.
+<p align="center">
+  <img alt="Stack" src="https://img.shields.io/badge/stack-React%2018%20%C2%B7%20TS%20%C2%B7%20Vite%206-7C3AED?style=flat-square">
+  <img alt="Style" src="https://img.shields.io/badge/style-Tailwind%20%C2%B7%20Fluent-0EA5E9?style=flat-square">
+  <img alt="State" src="https://img.shields.io/badge/state-Zustand%20%C2%B7%20localStorage-F59E0B?style=flat-square">
+  <img alt="Deploy" src="https://img.shields.io/badge/deploy-GitHub%20Pages-10B981?style=flat-square">
+</p>
+
+---
+
+You're the new manager at **Acme Corp**, a 23-person company that holds 127
+meetings a week and spends 2% of its time on actual work. Six executives
+outrank you. Each one remembers everything. You have 25 in-game days
+(about 30 minutes real time) to get promoted to VP — or get reassigned to
+Special Projects, restructured, paralysed by process, or one of five other
+thematic ways to lose.
 
 The game is the joke. The joke is corporate life.
 
 ---
 
-## Stack
-
-- **React 18** + **TypeScript** + **Vite 6**
-- **Tailwind CSS** for styling — Microsoft Fluent–inspired (tight 4–8 px corners, subtle shadows)
-- **Zustand** for state (with localStorage `persist`)
-- **Framer Motion** for animation
-
-Single-page app, mobile-first, designed to look like Microsoft Teams /
-Outlook running on a phone. Renders inside a `<PhoneFrame />` on desktop so
-the simulation always feels handheld.
-
----
-
-## Run it
+## Quick start
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # → http://localhost:5173
 npm run build      # production bundle in dist/
 npm run typecheck  # tsc -b --noEmit
 ```
 
-No backend. No accounts. The game state lives in `localStorage` under the key
-`meeting-tycoon-save` — bumping `persist.version` in `src/game/store.ts`
-wipes all saves on next load.
+No backend. No accounts. State persists to `localStorage` under
+`meeting-tycoon-save`.
 
-### Deploying
+---
+
+## How does the game actually work?
+
+→ **[GAMEPLAY.md](./GAMEPLAY.md)** — every system, every stage, every
+ending. Six KPIs. Six stakeholders. Five stages. Eight endings. How
+approval chains tick, how alliances form, how the Promotion is
+calculated. Spoils everything if that's what you want.
+
+If you'd rather discover it by playing, **[the live game](https://babanomania.github.io/meeting-tycoon/)**
+ships fresh saves on every push to `main`.
+
+---
+
+## Stack
+
+- **React 18** + **TypeScript** + **Vite 6** — SPA, single bundle
+- **Tailwind CSS** — Microsoft Fluent-inspired (4–8 px corners, subtle shadows)
+- **Zustand** — single store, `persist` middleware to `localStorage`
+- **Framer Motion** — screen transitions, the confetti, the toast
+
+Mobile-first, designed to look like Microsoft Teams / Outlook on a
+phone. On laptop/desktop (`lg:` 1024px+) the UI renders inside a
+`<PhoneFrame />` mockup so the simulation always feels handheld.
+
+---
+
+## Project layout
+
+```
+src/
+├── components/          # PhoneFrame, ChaosModal, KpiToast, StakeholderMap, etc.
+├── game/
+│   ├── types.ts         # Domain types — Kpis, MeetingType, ChatEvent, GameOverReason
+│   ├── data.ts          # MEETING_TYPES, REQUEST_POOL (D1-25), CHAOS_EVENTS, STAGE_GOALS
+│   ├── store.ts         # The Zustand store. Single source of truth. Every game rule.
+│   ├── politics.ts      # Stakeholder roster, sentiment math, alliance detection
+│   ├── chat.ts          # Seed conversations, DM_TEMPLATES, EVENT_REACTIONS
+│   └── characters.ts    # Display name + avatar resolution
+├── screens/
+│   ├── Landing.tsx      # Marketing page (white Fluent surface, full-width)
+│   ├── Onboarding.tsx   # First-run flow
+│   ├── Calendar.tsx     # Day agenda grid (the main play surface)
+│   ├── Inbox.tsx        # Meeting requests + impact projection + approval chips
+│   ├── Chat.tsx         # Teams-style channel + DM list
+│   ├── ChatThread.tsx   # Open thread view
+│   ├── Home.tsx         # Company hero + Quarterly Goals + KPI×Sponsor matrix
+│   ├── People.tsx       # Stakeholder map (hub-and-spoke, alliance overlays)
+│   ├── DaySummary.tsx   # End-of-day recap
+│   ├── StageUnlock.tsx  # Splash between stages
+│   ├── GameOver.tsx     # 7 failure modes
+│   └── Promotion.tsx    # Day 25 win/lateral screen
+└── App.tsx              # Screen router (Landing + Promotion render outside PhoneFrame)
+```
+
+The store is intentionally thick. Every gameplay rule lives in
+`store.ts` so screens stay thin projections of state. New mechanics
+generally mean: a new action on the store + a new UI surface that calls
+it + an entry in `EVENT_REACTIONS` so chat reflects the change.
+
+---
+
+## Extending the game
+
+### Adding a new meeting type
+
+1. Add the id to `MeetingTypeId` in `src/game/types.ts`.
+2. Add a `MeetingType` entry to `MEETING_TYPES` in `src/game/data.ts`
+   with `durationMin`, `attendees`, `priority`, `impact`, and a
+   `flavor` line of corporate humor.
+3. _(Optional)_ Add it to `MEETING_CHAT_META` and
+   `MEETING_HELD_TEMPLATES` in `src/game/chat.ts` so the meeting gets a
+   chat thread and post-meeting chatter.
+4. Reference it from a day in `REQUEST_POOL` (or fire it from a chaos
+   event / a new action).
+
+That's it — calendar, inbox impact projection, KPI math, and Day Summary
+pick it up automatically.
+
+### Adding a new chaos event
+
+Add a `ChaosEvent` to `CHAOS_EVENTS` in `data.ts` with `attendImpact`,
+`delegateImpact`, `rescheduleImpact`. Optionally wire reactions in
+`EVENT_REACTIONS` by matching on `chaosId`. The chaos system picks new
+ones up automatically.
+
+### Adding a new stage
+
+This is invasive — see Stage 4 or Stage 5 commits as reference. Roughly:
+extend `STAGE_LAST_DAY`, add `STAGE_GOALS` entries, add a day pool for
+the new days (8 requests/day), update `capFor` / `politicsMultiplier` /
+`stageGoalsFor`, add transition logic in `continueToNextDay`, define
+any climax/forced chaos behavior, add new chat reactions and StageUnlock
+copy, bump `persist.version`.
+
+---
+
+## Deploying
 
 Every push to `main` triggers `.github/workflows/deploy.yml`, which runs
 `npm ci && npm run build` with `VITE_BASE_PATH=/meeting-tycoon/` and
@@ -58,110 +153,18 @@ publishes `dist/` to GitHub Pages. Live URL:
 The same build runs locally with `npm run build && npm run preview` (no
 env var needed — Vite serves at `/` in preview mode).
 
----
-
-## The five stages
-
-Each stage runs 5 in-game days. Pressure scales with new constraints, not
-more numbers.
-
-| Stage | Days | Theme | Big idea |
-|---|---|---|---|
-| **1** | 1–5 | The First Week | 6 requests/day, 5 accepts, learn the ropes |
-| **2** | 6–10 | Welcome to Reality | 8 requests/day, cap drops to 4, Shield Meeting + Dashboard Report unlock, one forced Reorg |
-| **3** | 11–15 | Bureaucracy | Approval chains (3 of 5 sign-offs), Pass-to-Boss chaos option, Politics ×1.5, Process Paralysis failure |
-| **4** | 16–20 | Corporate Madness | Stakeholder alliances (+3 KPI), feuds (−3 alignment), PR Disaster auto-fire, Politics ×1.75, Day 20 Board Sync climax |
-| **5** | 21–25 | Executive Absurdity | Mandatory committees auto-spawn on every accept, AI Notes Bot floods #general, Legacy Meetings you can't remove, "Cook the Books" (−Visibility for +ExecConf with a next-day crash), Day 25 Promotion (5/5 = VP, 3–4 = lateral, ≤2 = PIP) |
-
-All 5 stages are fully playable today — full 25-day arc from Day 1 to the
-Day 25 Promotion (or PIP, or lateral move). See
-`docs/gameplay-plan.md`-style notes referenced in the project plan for the
-full spec.
+The workflow also writes a `404.html` SPA fallback and a `.nojekyll`
+flag so deep links work and Jekyll doesn't eat asset folders.
 
 ---
 
-## The KPI loop
+## Status
 
-Six KPIs, each sponsored by a real stakeholder. Burnout is inverted (lower
-is better — going down shows green).
+Stage 1 ✅ · Stage 2 ✅ · Stage 3 ✅ · Stage 4 ✅ · Stage 5 ✅
+&nbsp;—&nbsp; full 25-day arc complete.
 
-| KPI | Sponsor | What moves it |
-|---|---|---|
-| Productivity | CTO Raj Patel | Few meetings = up. Escalations = down. |
-| Morale | CHRO | Culture syncs, retros = up. Town halls, reorgs = down. |
-| Burnout | CFO Diana Vargas | Recovery on light days. Crisis meetings = up. |
-| Alignment | Your Boss David Chen | Standups, OKRs, alignment meetings = up. |
-| Exec Confidence | CEO Marcus Hale | Board pre-reads, QBRs, replying fast = up. |
-| Visibility | VP Strategy Tom Whitfield | Town halls, dashboards = up. |
-
-End of each day, the boss writes you a one-line review. End of each stage,
-you either advance or get a thematic game-over: **Team Walkout**, **Forced
-Sabbatical**, **You've been "Restructured"**, or the all-time classic
-**Reassigned to Special Projects**.
-
----
-
-## The recovery loop (Stage 0 polish)
-
-The single most important mechanic. For every unused accept slot at end of
-day, the team earns:
-
-- **Productivity +2**
-- **Burnout −2**
-- **Morale +1**
-
-An empty calendar earns +10 / −10 / +5. A maxed-out day earns nothing.
-**Restraint is a strategy.** Without this, every play feels like losing.
-Surfaced as its own "Rest & Recovery" card on the Day Summary.
-
----
-
-## Project layout
-
-```
-src/
-├── components/          # PhoneFrame, KpiToast, StakeholderMap, etc.
-├── game/
-│   ├── data.ts          # MEETING_TYPES, REQUEST_POOL, CHAOS_EVENTS, STAGE_GOALS
-│   ├── store.ts         # Zustand store — single source of truth
-│   ├── chat.ts          # Channel + DM templates + event reactions
-│   ├── types.ts         # Domain types
-│   ├── politics.ts      # Stakeholder relationship math
-│   └── characters.ts    # Display name + avatar resolution
-├── screens/
-│   ├── Onboarding.tsx
-│   ├── Calendar.tsx     # Day-of-week agenda grid
-│   ├── Inbox.tsx        # Meeting requests + impact projection
-│   ├── Chat.tsx         # Teams-style threads
-│   ├── Home.tsx         # Company hero + Quarterly Goals + KPI×People matrix
-│   ├── People.tsx       # Stakeholder map (hub-and-spoke SVG)
-│   ├── DaySummary.tsx
-│   ├── StageUnlock.tsx
-│   └── GameOver.tsx
-└── App.tsx              # Screen router
-```
-
-The store (`src/game/store.ts`) is intentionally thick — every gameplay rule
-lives there so the UI stays a thin projection of state. New mechanics
-generally mean: a new action on the store + a new screen surface that calls
-it + an entry in `EVENT_REACTIONS` so chat reflects the change.
-
----
-
-## Adding a new meeting type
-
-1. Add the id to `MeetingTypeId` in `src/game/types.ts`.
-2. Add a `MeetingType` entry to `MEETING_TYPES` in `src/game/data.ts` with
-   `durationMin`, `attendees`, `priority`, `impact`, and a `flavor` line of
-   corporate humor.
-3. (Optional) Add it to `MEETING_CHAT_META` and `MEETING_HELD_TEMPLATES` in
-   `src/game/chat.ts` so the meeting gets a chat thread and post-meeting
-   chatter.
-4. Reference it from a day in `REQUEST_POOL` (or trigger it from a chaos
-   event / a new action).
-
-That's it — the calendar, inbox impact projection, KPI math, and Day Summary
-all pick it up automatically.
+No tests yet — gameplay is iterated through playthroughs. The build is
+the test plan: `npm run typecheck` and `npm run build` must stay green.
 
 ---
 
@@ -169,24 +172,14 @@ all pick it up automatically.
 
 - **Microsoft Fluent UI** — corner radii (4–8 px), elevation, MessageBar
   layout for the KPI toast
-- **Microsoft Teams / Outlook mobile** — channel list, thread view, avatar
-  initials, reaction strip
-- **The actual experience of working at a SaaS company** — primary source
-  material
-
----
-
-## Status
-
-Stage 1 ✅ · Stage 2 ✅ · Stage 3 ✅ · Stage 4 ✅ · Stage 5 ✅ — full 25-day arc complete.
-
-No tests yet — gameplay is iterated through playthroughs. The build is the
-test plan: typecheck (`npm run typecheck`) and production build
-(`npm run build`) must stay green. Add a [Stage 3+] commit log entry when
-you ship the next stage.
+- **Microsoft Teams / Outlook mobile** — channel list, thread view,
+  avatar initials, reaction strip, the OVERBOOKED status pill
+- **The actual experience of working at a SaaS company** — primary
+  source material
 
 ---
 
 ## License
 
-Private project. All corporate satire intentional.
+MIT-ish. Open source. Corporate satire intentional. Acme Corp is
+fictional. Any resemblance to your last all-hands is coincidental.
