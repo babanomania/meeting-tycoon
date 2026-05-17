@@ -110,7 +110,7 @@ export function Promotion() {
           <div className="grid grid-cols-3 gap-3 text-center">
             <Stat label="Days survived" value="25" />
             <Stat label="Stage 5 goals" value={`${result.goalsMet} / ${result.goalsTotal}`} />
-            <Stat label="Outcome" value={isWin ? 'PROMOTED' : 'LATERAL'} />
+            <Stat label="Outcome" value={isWin ? 'PROMOTED' : 'LATERAL'} compact />
           </div>
         </motion.div>
 
@@ -137,11 +137,19 @@ export function Promotion() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, compact }: { label: string; value: string; compact?: boolean }) {
+  // Numeric values get the chunky tabular-nums treatment; letter values
+  // (PROMOTED / LATERAL) shrink to fit the narrow column without overflow.
   return (
-    <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-3">
+    <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-3 min-w-0">
       <div className="text-[10px] uppercase tracking-widest text-white/50">{label}</div>
-      <div className="text-[18px] font-extrabold text-white mt-1 tabular-nums">{value}</div>
+      <div
+        className={`font-extrabold text-white mt-1 ${
+          compact ? 'text-[14px] tracking-wider' : 'text-[18px] tabular-nums'
+        }`}
+      >
+        {value}
+      </div>
     </div>
   );
 }

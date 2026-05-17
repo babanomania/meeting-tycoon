@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useGame } from '@/game/store';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
@@ -18,11 +18,29 @@ export function ChatScreen() {
   const openConversation = useGame((s) => s.openConversation);
   const readIds = useGame((s) => s.readConversationIds);
 
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
+
+  // Filter conversations by name, subtitle, or any message body matching
+  // the query (case-insensitive). When the query is empty we pass through
+  // everything so toggling the search bar with no input doesn't blank the
+  // list.
+  const visibleConversations = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return conversations;
+    return conversations.filter((c) => {
+      if (c.name.toLowerCase().includes(q)) return true;
+      if (c.subtitle && c.subtitle.toLowerCase().includes(q)) return true;
+      const msgs = messages[c.id] ?? [];
+      return msgs.some((m) => m.body.toLowerCase().includes(q));
+    });
+  }, [conversations, messages, query]);
+
   const { groups, dms, meetings } = useMemo(() => {
     const groups: Conversation[] = [];
     const dms: Conversation[] = [];
     const meetings: Conversation[] = [];
-    for (const c of conversations) {
+    for (const c of visibleConversations) {
       if (c.kind === 'group') groups.push(c);
       else if (c.kind === 'dm') dms.push(c);
       else if (c.kind === 'meeting') meetings.push(c);
@@ -33,26 +51,72 @@ export function ChatScreen() {
       dms: dms.sort(byRecency),
       meetings: meetings.sort(byRecency),
     };
-  }, [conversations]);
+  }, [visibleConversations]);
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setQuery('');
+  };
+
+  const noMatches = searchOpen && query.trim().length > 0 && visibleConversations.length === 0;
 
   return (
     <div className="flex flex-col h-full">
       <div className="px-5 pt-5 pb-3 flex items-center gap-2 border-b border-ink-100">
-        <MenuButton />
-        <div className="flex-1 min-w-0">
-          <div className="text-[10.5px] font-semibold uppercase tracking-widest text-ink-400">
-            Day {day} · Today
-          </div>
-          <h1 className="text-[20px] font-bold text-ink-800 leading-tight mt-0.5">Chat</h1>
-        </div>
-        <button className="w-8 h-8 rounded-sm hover:bg-ink-50 flex items-center justify-center text-ink-500">
-          <Icon name="search" size={18} />
-        </button>
+        {searchOpen ? (
+          <>
+            <div className="flex-1 flex items-center gap-2 h-9 px-3 rounded-md bg-ink-50 border border-ink-200">
+              <Icon name="search" size={15} className="text-ink-400 shrink-0" />
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Escape') closeSearch(); }}
+                placeholder="Search messages, channels, people…"
+                className="flex-1 min-w-0 bg-transparent outline-none text-[13px] placeholder:text-ink-400"
+              />
+              {query && (
+                <button
+                  onClick={() => setQuery('')}
+                  aria-label="Clear search"
+                  className="shrink-0 text-ink-400 hover:text-ink-600"
+                >
+                  <Icon name="x" size={14} />
+                </button>
+              )}
+            </div>
+            <button
+              onClick={closeSearch}
+              className="text-[12.5px] font-semibold text-ink-500 hover:text-ink-800 px-1"
+            >
+              Cancel
+            </button>
+          </>
+        ) : (
+          <>
+            <MenuButton />
+            <div className="flex-1 min-w-0">
+              <div className="text-[10.5px] font-semibold uppercase tracking-widest text-ink-400">
+                Day {day} · Today
+              </div>
+              <h1 className="text-[20px] font-bold text-ink-800 leading-tight mt-0.5">Chat</h1>
+            </div>
+            <button
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search chats"
+              className="w-8 h-8 rounded-sm hover:bg-ink-50 flex items-center justify-center text-ink-500"
+            >
+              <Icon name="search" size={18} />
+            </button>
+          </>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto phone-scroll">
         {conversations.length === 0 ? (
           <Empty />
+        ) : noMatches ? (
+          <NoMatches query={query} onClear={() => setQuery('')} />
         ) : (
           <>
             <Section title="Channels" items={groups} messages={messages} readIds={readIds} onTap={openConversation} />
@@ -75,6 +139,28 @@ function Empty() {
       <div className="text-[11.5px] text-ink-400 mt-0.5">
         Chats will fill up as you start your day.
       </div>
+    </div>
+  );
+}
+
+function NoMatches({ query, onClear }: { query: string; onClear: () => void }) {
+  return (
+    <div className="text-center py-14 px-6">
+      <div className="inline-flex w-12 h-12 rounded-full bg-ink-100 text-ink-400 items-center justify-center">
+        <Icon name="search" size={22} />
+      </div>
+      <div className="mt-2 text-[13.5px] font-semibold text-ink-700">
+        No chats match "<span className="text-ink-900">{query}</span>"
+      </div>
+      <div className="text-[11.5px] text-ink-400 mt-0.5 mb-3">
+        Searched channel names, DM names, and message bodies.
+      </div>
+      <button
+        onClick={onClear}
+        className="text-[12px] font-semibold text-brand-600 hover:text-brand-700"
+      >
+        Clear search
+      </button>
     </div>
   );
 }
