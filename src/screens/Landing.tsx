@@ -96,12 +96,12 @@ export function Landing() {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45 }}
-          className="mt-9 flex flex-wrap items-center gap-3"
+          className="mt-9 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3"
         >
           {hasSave && (
             <button
               onClick={resume}
-              className="inline-flex items-center gap-2 h-12 px-6 rounded-md bg-brand-600 text-white text-[15px] font-semibold hover:bg-brand-700 transition shadow-sm"
+              className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-md bg-brand-600 text-white text-[15px] font-semibold hover:bg-brand-700 transition shadow-sm w-full sm:w-auto"
             >
               <Icon name="calendar" size={16} />
               Resume · Stage {stage} Day {day}
@@ -111,15 +111,15 @@ export function Landing() {
             onClick={start}
             className={
               hasSave
-                ? 'inline-flex items-center gap-2 h-12 px-5 rounded-md bg-white text-ink-800 border border-ink-200 text-[14px] font-semibold hover:bg-ink-50 transition'
-                : 'inline-flex items-center gap-2 h-12 px-6 rounded-md bg-brand-600 text-white text-[15px] font-semibold hover:bg-brand-700 transition shadow-sm'
+                ? 'inline-flex items-center justify-center gap-2 h-12 px-5 rounded-md bg-white text-ink-800 border border-ink-200 text-[14px] font-semibold hover:bg-ink-50 transition w-full sm:w-auto'
+                : 'inline-flex items-center justify-center gap-2 h-12 px-6 rounded-md bg-brand-600 text-white text-[15px] font-semibold hover:bg-brand-700 transition shadow-sm w-full sm:w-auto'
             }
           >
             <Icon name="sparkle" size={16} />
             {hasSave ? 'Start over' : 'Launch the game'}
           </button>
           {!hasSave && (
-            <span className="text-[11.5px] text-ink-500">
+            <span className="text-[11.5px] text-ink-500 text-center sm:text-left">
               ~90 seconds per in-game day · saves to your browser
             </span>
           )}
@@ -320,10 +320,10 @@ export function Landing() {
           <p className="mt-5 text-[15px] md:text-base text-white/85 max-w-xl mx-auto leading-relaxed">
             How bad could it be? Find out before David sends another "got a sec?"
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <div className="mt-8 flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3">
             <button
               onClick={start}
-              className="inline-flex items-center gap-2 h-12 px-7 rounded-md bg-white text-brand-700 text-[15px] font-bold hover:bg-amber-50 transition shadow-lg"
+              className="inline-flex items-center justify-center gap-2 h-12 px-7 rounded-md bg-white text-brand-700 text-[15px] font-bold hover:bg-amber-50 transition shadow-lg w-full sm:w-auto"
             >
               <Icon name="sparkle" size={16} />
               Launch the game
@@ -331,7 +331,7 @@ export function Landing() {
             {hasSave && (
               <button
                 onClick={resume}
-                className="inline-flex items-center gap-2 h-12 px-6 rounded-md bg-white/10 border border-white/25 text-white text-[14px] font-semibold hover:bg-white/15 transition"
+                className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-md bg-white/10 border border-white/25 text-white text-[14px] font-semibold hover:bg-white/15 transition w-full sm:w-auto"
               >
                 <Icon name="calendar" size={16} />
                 Resume Day {day}
