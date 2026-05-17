@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Meeting Tycoon — Can you take the promotion in 25 days?" preserveAspectRatio="xMidYMid meet">
+  <title>Meeting Tycoon — Can you take the promotion in 25 days?</title>
+
+  <defs>
+    <!-- Brand gradient background -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7C3AED"/>
+      <stop offset="0.55" stop-color="#5B21B6"/>
+      <stop offset="1" stop-color="#2E1065"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.3" r="0.7">
+      <stop offset="0" stop-color="#FBBF24" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#FBBF24" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Sticker shadow -->
+    <filter id="stickerShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0F0420" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- Subtle dot grid for depth -->
+  <g fill="#FFFFFF" opacity="0.05">
+    <circle cx="80"   cy="80"  r="2"/>
+    <circle cx="160"  cy="80"  r="2"/>
+    <circle cx="240"  cy="80"  r="2"/>
+    <circle cx="320"  cy="80"  r="2"/>
+    <circle cx="960"  cy="80"  r="2"/>
+    <circle cx="1040" cy="80"  r="2"/>
+    <circle cx="1120" cy="80"  r="2"/>
+    <circle cx="80"   cy="550" r="2"/>
+    <circle cx="160"  cy="550" r="2"/>
+    <circle cx="240"  cy="550" r="2"/>
+    <circle cx="960"  cy="550" r="2"/>
+    <circle cx="1040" cy="550" r="2"/>
+    <circle cx="1120" cy="550" r="2"/>
+  </g>
+
+  <!-- ── Top: brand strip ── -->
+  <g font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <g transform="translate(60 60)">
+      <rect width="44" height="44" rx="9" fill="#FFFFFF" fill-opacity="0.10" stroke="#FFFFFF" stroke-opacity="0.18"/>
+      <text x="22" y="29" fill="#FFFFFF" font-size="17" font-weight="800" text-anchor="middle" letter-spacing="-0.5">MT</text>
+    </g>
+    <text x="118" y="78" fill="#FFFFFF" font-size="17" font-weight="700" letter-spacing="-0.2">Meeting Tycoon</text>
+    <text x="118" y="98" fill="#FFFFFF" opacity="0.6" font-size="11" font-weight="600" letter-spacing="2">v1.0 · BETA</text>
+
+    <!-- Yellow kicker chip top-right -->
+    <g transform="translate(820 64)">
+      <rect width="320" height="36" rx="18" fill="#FBBF24" fill-opacity="0.16" stroke="#FBBF24" stroke-opacity="0.4"/>
+      <circle cx="22" cy="18" r="5" fill="#FBBF24"/>
+      <text x="40" y="23" fill="#FCD34D" font-size="13" font-weight="700" letter-spacing="2.5">A SATIRICAL CORPORATE SIM</text>
+    </g>
+  </g>
+
+  <!-- ── Hero: the question ── -->
+  <!-- Centered + safe — fits a square crop in WhatsApp thumbnails too -->
+  <g font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="600" y="270" fill="#FFFFFF" font-size="84" font-weight="800" letter-spacing="-3">
+      Can you take the
+    </text>
+    <text x="600" y="370" fill="#FFFFFF" font-size="84" font-weight="800" letter-spacing="-3">
+      promotion in <tspan fill="#FBBF24">25 days?</tspan>
+    </text>
+  </g>
+
+  <!-- ── Stats strip ── -->
+  <g font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="600" y="455" fill="#E9D5FF" font-size="22" font-weight="500">
+      127 meetings a week. 6 executives who remember everything.
+    </text>
+    <text x="600" y="488" fill="#C4B5FD" font-size="18" font-weight="500">
+      One promotion. Eight ways to fail.
+    </text>
+  </g>
+
+  <!-- ── Bottom: URL chip ── -->
+  <g font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <g transform="translate(420 543)" filter="url(#stickerShadow)">
+      <rect width="360" height="48" rx="24" fill="#FFFFFF"/>
+      <text x="180" y="31" fill="#5B21B6" font-size="15" font-weight="700" text-anchor="middle" letter-spacing="0.3">
+        ▶  Play in your browser  →
+      </text>
+    </g>
+    <text x="600" y="615" fill="#FFFFFF" opacity="0.4" font-size="11" font-weight="600" text-anchor="middle" letter-spacing="2">
+      BABANOMANIA.GITHUB.IO/MEETING-TYCOON
+    </text>
+  </g>
+</svg>
