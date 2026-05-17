@@ -125,18 +125,27 @@ export function Landing() {
           )}
         </motion.div>
 
-        {/* Hero image — framed inset, the visible "what the game looks like" */}
+        {/* Hero visual — different composition for mobile vs desktop because
+            the wide SVG banner becomes unreadable below ~640px. Mobile gets a
+            native portrait card built in React; desktop keeps the SVG. */}
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.55, duration: 0.6 }}
-          className="mt-14 md:mt-20 rounded-xl bg-white border border-ink-100 shadow-[0_30px_80px_-20px_rgba(76,29,149,0.25)] overflow-hidden"
+          className="mt-12 md:mt-20"
         >
-          <img
-            src={`${import.meta.env.BASE_URL}hero.svg`}
-            alt="Meeting Tycoon — a full week calendar absurdly overbooked, with notification toasts bursting from the edges"
-            className="w-full block"
-          />
+          {/* Mobile composition */}
+          <div className="md:hidden">
+            <MobileHero />
+          </div>
+          {/* Desktop banner */}
+          <div className="hidden md:block rounded-xl bg-white border border-ink-100 shadow-[0_30px_80px_-20px_rgba(76,29,149,0.25)] overflow-hidden">
+            <img
+              src={`${import.meta.env.BASE_URL}hero.svg`}
+              alt="Meeting Tycoon — a full week calendar absurdly overbooked, with notification toasts bursting from the edges"
+              className="w-full block"
+            />
+          </div>
         </motion.div>
       </section>
 
@@ -466,6 +475,135 @@ const ENDINGS: { name: string; kind: 'win' | 'loss' }[] = [
   { name: 'Performance Improvement Plan',  kind: 'loss' },
   { name: 'VP of Synergy',                 kind: 'win' },
 ];
+
+/**
+ * Mobile hero — portrait composition that survives phone widths.
+ * Shows Wednesday (the crisis day from the desktop hero) as a vertical
+ * day-view, with two notification toasts bursting out and a BURNOUT chip
+ * sticking out the bottom. Same joke, different aspect.
+ */
+function MobileHero() {
+  return (
+    <div className="relative rounded-2xl bg-gradient-to-br from-brand-700 via-brand-600 to-[#3B0764] p-4 pb-12 shadow-2xl overflow-hidden">
+      {/* Soft glow */}
+      <div
+        className="absolute inset-0 opacity-30 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(circle at 70% 30%, rgba(251,191,36,0.25), transparent 50%)',
+        }}
+      />
+
+      {/* The calendar card — single day */}
+      <div className="relative rounded-xl bg-white shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="px-4 pt-4 pb-3">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-[9.5px] font-bold tracking-widest uppercase text-ink-400">
+                Stage 2 · Day 8 of 25
+              </div>
+              <div className="text-[20px] font-extrabold text-ink-800 tracking-tight mt-0.5">
+                Wednesday
+              </div>
+            </div>
+            <div className="rounded-md bg-rose-50 border border-rose-200 px-2 py-1 text-right">
+              <div className="text-[8.5px] font-bold tracking-wider text-rose-700">⚠ OVERBOOKED</div>
+              <div className="text-[10px] font-bold text-rose-900 tabular-nums">6 mtgs · 0 focus</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="h-px bg-ink-100" />
+
+        {/* Capacity strip */}
+        <div className="px-4 py-2 bg-ink-50/60 flex items-center justify-between text-[10.5px]">
+          <span className="text-ink-500">
+            <b className="text-ink-700">6</b> meetings · <b className="text-ink-700">7.5h</b> booked
+          </span>
+          <span className="font-bold text-rose-600">0 / 5 left</span>
+        </div>
+
+        {/* Day's meetings — all crisis red, the joke */}
+        <ul className="px-4 pt-3 pb-4 space-y-1.5">
+          <MeetingRow time="9:00 AM"  title="Engineering Escalation" tone="crisis" tagline="CRISIS · CTO" />
+          <MeetingRow time="10:00 AM" title="PR Cleanup"             tone="crisis" tagline="A VP tweeted" />
+          <MeetingRow time="11:00 AM" title="Reorg Meeting"          tone="crisis" tagline="Mandatory" />
+          <MeetingRow time="12:00 PM" title="Two Town Halls (??)"    tone="crisis" tagline="Both at once" />
+          <MeetingRow time="2:30 PM"  title="Board Pre-read"         tone="crisis" tagline="Diana has notes" />
+          <MeetingRow time="4:00 PM"  title="CFO Sync · URGENT"      tone="crisis" tagline="Cameras on" />
+        </ul>
+      </div>
+
+      {/* Floating notification — top-right, slightly tilted */}
+      <div
+        className="absolute right-2 z-10"
+        style={{ top: '12px', transform: 'rotate(3deg)' }}
+      >
+        <div className="w-[180px] rounded-lg bg-white shadow-2xl overflow-hidden">
+          <div className="px-2.5 py-1 bg-amber-100">
+            <div className="text-[8.5px] font-bold tracking-wider text-amber-800">⚡ INTERRUPTION</div>
+          </div>
+          <div className="px-2.5 py-2">
+            <div className="text-[11px] font-extrabold text-ink-800 leading-tight">CEO Added a "Quick Sync"</div>
+            <div className="text-[9px] text-ink-500 italic mt-0.5">No agenda. Cannot wait.</div>
+          </div>
+        </div>
+      </div>
+
+      {/* BURNOUT chip — bursting out the bottom-left of the card */}
+      <div
+        className="absolute left-2 z-10"
+        style={{ bottom: '8px', transform: 'rotate(-4deg)' }}
+      >
+        <div className="rounded-lg bg-white shadow-2xl pl-1 pr-3 py-2 flex items-center gap-2.5">
+          <div className="w-1 h-9 rounded-full bg-rose-500" />
+          <div>
+            <div className="text-[8.5px] font-bold tracking-wider text-ink-400 uppercase">Burnout</div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[20px] font-extrabold text-ink-800 tabular-nums leading-none">74</span>
+              <span className="text-[9px] text-ink-300">/100</span>
+              <span className="text-[11px] font-extrabold text-rose-500 tabular-nums">▲ 8</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MeetingRow({
+  time,
+  title,
+  tone,
+  tagline,
+}: {
+  time: string;
+  title: string;
+  tone: 'crisis';
+  tagline: string;
+}) {
+  // Single tone for the mobile hero (Wednesday = all crisis day = visual joke).
+  const palette = tone === 'crisis' ? {
+    rail: 'bg-rose-700',
+    bg: 'bg-rose-100/80',
+    border: 'border-rose-200',
+    title: 'text-rose-900',
+    sub: 'text-rose-700',
+  } : { rail: 'bg-ink-300', bg: 'bg-ink-50', border: 'border-ink-200', title: 'text-ink-800', sub: 'text-ink-500' };
+  return (
+    <li className={`flex items-stretch rounded-md border ${palette.border} ${palette.bg} overflow-hidden`}>
+      <div className={`w-1 ${palette.rail}`} />
+      <div className="flex-1 py-1.5 px-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className={`text-[11.5px] font-extrabold ${palette.title} leading-tight truncate`}>{title}</span>
+          <span className={`text-[9.5px] font-bold ${palette.sub} tabular-nums shrink-0`}>{time}</span>
+        </div>
+        <div className={`text-[9.5px] ${palette.sub} mt-0.5 italic leading-snug truncate`}>{tagline}</div>
+      </div>
+    </li>
+  );
+}
 
 function BackgroundGrid() {
   return (
