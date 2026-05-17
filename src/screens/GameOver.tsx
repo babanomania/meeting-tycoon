@@ -10,6 +10,7 @@ const REASON_ICON: Record<GameOverReason, IconName> = {
   'fired-low-confidence': 'inbox',
   'burnout-sabbatical':   'fire',
   'restructured':         'people',
+  'process-paralysis':    'clock',
 };
 
 export function GameOver() {

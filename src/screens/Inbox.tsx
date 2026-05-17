@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useGame, projectKpis, pendingRequestsFor } from '@/game/store';
+import { useGame, projectKpis, pendingRequestsFor, isRequestApproved } from '@/game/store';
 import { MEETING_TYPES, capFor, stageGoalsFor } from '@/game/data';
 import { Icon } from '@/components/Icon';
 import { MenuButton } from '@/components/SettingsDrawer';
@@ -8,7 +8,7 @@ import { Avatar } from '@/components/Avatar';
 import { Chip, type ChipTone } from '@/components/Chip';
 import { KPI_META } from '@/components/KpiBadge';
 import { characterDisplayName } from '@/game/characters';
-import type { KpiKey, MeetingPriority, QuarterlyGoal, Kpis, KpiDelta } from '@/game/types';
+import type { KpiKey, MeetingPriority, QuarterlyGoal, Kpis, KpiDelta, MeetingRequest, Stakeholder, StakeholderId } from '@/game/types';
 
 function priorityTone(p: MeetingPriority): ChipTone {
   switch (p) {
@@ -40,9 +40,12 @@ export function InboxScreen() {
   const setScreen = useGame((s) => s.setScreen);
 
   const schedule = useGame((s) => s.schedule);
+  const carryover = useGame((s) => s.carryoverRequests);
+  const requestApprovals = useGame((s) => s.requestApprovals);
+  const stakeholders = useGame((s) => s.stakeholders);
   const openRequests = useMemo(
-    () => pendingRequestsFor(day, accepted, schedule),
-    [day, accepted, schedule],
+    () => pendingRequestsFor(day, accepted, schedule, carryover),
+    [day, accepted, schedule, carryover],
   );
   const cap = capFor(stage);
   const acceptsToday = accepted.filter(
@@ -96,6 +99,9 @@ export function InboxScreen() {
             <AnimatePresence>
               {openRequests.map((r) => {
                 const t = MEETING_TYPES[r.typeId];
+                const approvals = requestApprovals[r.uid];
+                const approved = isRequestApproved(r, approvals);
+                const isGated = !!r.approvers && r.approvers.length > 0;
                 return (
                   <motion.div
                     key={r.uid}
@@ -129,16 +135,26 @@ export function InboxScreen() {
                       <div className="text-[12px] text-ink-600 mt-2 italic leading-snug">"{r.note}"</div>
                       <div className="text-[11px] text-ink-400 mt-1 leading-snug">{t.flavor}</div>
 
+                      {/* Stage 3 approval chain — shown only on gated requests. */}
+                      {isGated && (
+                        <ApprovalChainRow
+                          request={r}
+                          approvals={approvals ?? []}
+                          stakeholders={stakeholders}
+                        />
+                      )}
+
                       <ImpactRow delta={t.impact} />
                       <GoalProjection delta={t.impact} kpis={kpis} goals={stageGoalsFor(stage)} />
 
                       <div className="mt-3 flex items-center gap-2">
                         <button
                           onClick={() => acceptRequest(r.uid)}
-                          disabled={capReached}
+                          disabled={capReached || !approved}
+                          title={!approved ? 'Awaiting approvals' : undefined}
                           className="pf-btn-primary h-9 px-3 text-[12.5px] disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
                         >
-                          Accept
+                          {isGated && !approved ? 'Awaiting approvals' : 'Accept'}
                         </button>
                         <button
                           onClick={() => declineRequest(r.uid)}
@@ -217,6 +233,75 @@ function GoalProjection({ delta, kpis, goals }: { delta: KpiDelta; kpis: Kpis; g
           </span>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Stage 3 approval chain row — shows "X of N approvals" with avatars of
+ * who has signed off (green) vs who hasn't (grey). When the chain clears,
+ * it flips to a "✓ Ready to accept" green banner so the player feels the
+ * unlock moment.
+ */
+function ApprovalChainRow({
+  request,
+  approvals,
+  stakeholders,
+}: {
+  request: MeetingRequest;
+  approvals: StakeholderId[];
+  stakeholders: Stakeholder[];
+}) {
+  if (!request.approvers) return null;
+  const need = request.requiresApprovals ?? 3;
+  const have = approvals.length;
+  const cleared = have >= need;
+
+  return (
+    <div
+      className={`mt-2 rounded-sm px-2.5 py-2 text-[11.5px] ${
+        cleared
+          ? 'bg-emerald-50 border border-emerald-100'
+          : 'bg-indigo-50 border border-indigo-100'
+      }`}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <span
+          className={`inline-flex items-center gap-1.5 font-semibold ${
+            cleared ? 'text-emerald-700' : 'text-indigo-700'
+          }`}
+        >
+          <Icon name={cleared ? 'check' : 'people'} size={13} />
+          {cleared ? 'Ready to accept' : `Needs ${need} approvals`}
+        </span>
+        <span
+          className={`font-bold tabular-nums ${
+            cleared ? 'text-emerald-700' : 'text-indigo-700'
+          }`}
+        >
+          {have} / {need}
+        </span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        {request.approvers.map((id) => {
+          const s = stakeholders.find((x) => x.id === id);
+          const ok = approvals.includes(id);
+          const name = s ? characterDisplayName(s.name) : id;
+          return (
+            <div key={id} className="relative">
+              <Avatar name={name} size={22} />
+              {!ok && (
+                <div className="absolute inset-0 rounded-full bg-white/65" title={`Awaiting ${name}`} />
+              )}
+              {ok && (
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border border-white flex items-center justify-center">
+                  <Icon name="check" size={8} className="text-white" />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

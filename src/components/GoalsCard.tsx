@@ -21,6 +21,12 @@ const GOAL_ICON: Record<string, IconName> = {
   'g2-chro':       'people',
   'g2-prod':       'sparkle',
   'g2-burnout':    'fire',
+  // Stage 3
+  'g3-boss':       'briefcase',
+  'g3-cfo':        'briefcase',
+  'g3-coalition':  'people',
+  'g3-velocity':   'sparkle',
+  'g3-burnout':    'fire',
 };
 
 /** Read the current value behind a goal — KPI or stakeholder relationship. */

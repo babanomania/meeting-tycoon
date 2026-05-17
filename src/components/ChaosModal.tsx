@@ -17,9 +17,11 @@ const CHAOS_ICON: Record<string, IconName> = {
 
 export function ChaosModal() {
   const active = useGame((s) => s.activeChaos);
+  const stage = useGame((s) => s.stage);
   const resolve = useGame((s) => s.resolveChaos);
 
   const ev = active ? CHAOS_EVENTS.find((e) => e.id === active.id) : null;
+  const canPassToBoss = stage >= 3;
 
   return (
     <AnimatePresence>
@@ -95,6 +97,15 @@ export function ChaosModal() {
                   sub="Might upset the CEO."
                   delta={ev.rescheduleImpact}
                 />
+                {/* Stage 3+ defensive escape hatch — punt it upward. */}
+                {canPassToBoss && (
+                  <ChoiceBtn
+                    onClick={() => resolve('pass-to-boss')}
+                    icon="arrow-up"
+                    title="Pass to Boss"
+                    sub="No KPI hit. Boss takes a hit. They will remember."
+                  />
+                )}
               </div>
             </div>
           </motion.div>

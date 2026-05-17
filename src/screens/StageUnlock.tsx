@@ -29,13 +29,25 @@ const STAGE_META: Record<number, StageMeta> = {
     ],
   },
   3: {
-    name: 'Bureaucracy Awaits',
+    name: 'Bureaucracy',
     tagline:
-      'Approval chains, executive escalations, scheduling conflicts. Stage 3 is being built.',
+      'Process replaces work. Requests need three signatures before you can even say yes. Every relationship change hits 1.5× harder.',
     unlocks: [
-      { icon: 'people',   title: 'Approval Chains',    sub: 'Some requests need 3 of 5 stakeholders to sign off first.' },
-      { icon: 'arrow-up', title: 'Pass to Boss',       sub: 'Punt a crisis upward. Costs relationship. Coming soon.' },
-      { icon: 'alert',    title: 'Scheduling Conflicts', sub: 'Two requests, one slot. Pick one. Coming soon.' },
+      { icon: 'people',   title: 'Approval Chains',    sub: 'Gated requests need 3 of 5 leaders to sign off before they unlock.' },
+      { icon: 'arrow-up', title: 'Pass to Boss',       sub: 'New chaos option. No KPI hit. Your boss takes −15.' },
+      { icon: 'sparkle',  title: 'Politics Doubles',   sub: 'Every relationship change applies at 1.5×. Friends help more, enemies hurt more.' },
+      { icon: 'clock',    title: 'Process Paralysis',  sub: 'New failure: every stakeholder cool to you and nothing moves. Ever.' },
+    ],
+  },
+  4: {
+    name: 'Corporate Madness',
+    tagline:
+      'Multi-day meetings, stakeholder alliances, the Board Sync. Stage 4 is being built — for now expect Stage 3 pressure with mounting absurdity.',
+    unlocks: [
+      { icon: 'calendar', title: 'Multi-Day Meetings', sub: '2- and 3-day workshops. Eat slots across days. In design.' },
+      { icon: 'people',   title: 'Stakeholder Alliances', sub: 'Two friends at 70+ form an alliance. Two enemies trigger feuds. In design.' },
+      { icon: 'alert',    title: 'Crisis Stacking',    sub: 'Up to two chaos events at once. Triage. In design.' },
+      { icon: 'star',     title: 'The Board Sync',     sub: 'Day 20 climax. All goals evaluated. In design.' },
     ],
   },
 };

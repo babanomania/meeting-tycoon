@@ -328,6 +328,67 @@ export const REQUEST_POOL: Record<number, MeetingRequest[]> = {
     { uid: 'd10-r7', typeId: 'board-pre-read', from: 'CFO', note: 'Weekend reading. Diana said "thanks in advance".' },
     { uid: 'd10-r8', typeId: 'culture-sync', from: 'HR', note: 'Mandatory cake. Possibly farewell cake.' },
   ],
+
+  // ── Stage 3 (Days 11-15) — Bureaucracy. Same 8/day pace, but ~2 of every
+  //    8 requests carry an Approval Chain (needs 3 of 5 leaders to sign off
+  //    before you can even accept). The waiting itself is the cost.
+  11: [
+    { uid: 'd11-r1', typeId: 'standup', from: 'Engineering', note: 'Monday standup. New OKR season. Nobody is ready.' },
+    { uid: 'd11-r2', typeId: 'project-kickoff', from: 'Product', note: 'Q4 platform refresh. Needs leadership sign-off.',
+      approvers: ['cfo', 'cto', 'vp_strategy', 'ceo', 'boss'], requiresApprovals: 3 },
+    { uid: 'd11-r3', typeId: 'budget-review', from: 'CFO', note: 'Q4 headcount conversation. Diana brought a calculator.' },
+    { uid: 'd11-r4', typeId: 'okr-checkin', from: 'VP Strategy', note: 'New "stretch" KORs being introduced.' },
+    { uid: 'd11-r5', typeId: 'stakeholder-sync', from: 'Sales', note: 'Pat wants alignment on the realigned alignment.' },
+    { uid: 'd11-r6', typeId: 'eng-escalation', from: 'CTO', note: 'Raj is escalating about escalations.' },
+    { uid: 'd11-r7', typeId: 'culture-sync', from: 'People Ops', note: 'Post-reorg vibes audit. Bring optimism.' },
+    { uid: 'd11-r8', typeId: 'strategy-offsite', from: 'Leadership', note: 'Off-cycle strategy reset. Approval required.',
+      approvers: ['ceo', 'cfo', 'cto', 'vp_strategy', 'chro'], requiresApprovals: 3 },
+  ],
+  12: [
+    { uid: 'd12-r1', typeId: 'standup', from: 'Engineering', note: 'Tuesday. Two new acronyms introduced overnight.' },
+    { uid: 'd12-r2', typeId: 'design-review', from: 'Design', note: 'Onboarding flow v3. v2 was approved yesterday.' },
+    { uid: 'd12-r3', typeId: 'budget-review', from: 'CFO', note: 'Re-review of the budget review. Diana found a row.',
+      approvers: ['cfo', 'ceo', 'boss', 'vp_strategy', 'cto'], requiresApprovals: 3 },
+    { uid: 'd12-r4', typeId: 'pre-read-sync', from: 'Strategy', note: 'Pre-reading the deck about the previous pre-read.' },
+    { uid: 'd12-r5', typeId: 'town-hall', from: 'CEO', note: 'Marcus wants to "address the room".' },
+    { uid: 'd12-r6', typeId: 'retro', from: 'Engineering', note: 'Three stickies. All say "approvals".' },
+    { uid: 'd12-r7', typeId: '1on1', from: 'Your Boss', note: 'David has feedback. Possibly career feedback.' },
+    { uid: 'd12-r8', typeId: 'pr-cleanup', from: 'Legal', note: 'A VP forwarded a tweet. Lawyers want a sync.' },
+  ],
+  13: [
+    { uid: 'd13-r1', typeId: 'standup', from: 'Engineering', note: 'Wednesday. Standup ran 45 minutes yesterday.' },
+    { uid: 'd13-r2', typeId: 'okr-checkin', from: 'VP Strategy', note: 'KORs are now OKR-Rs. Rolling rebrand.' },
+    { uid: 'd13-r3', typeId: 'stakeholder-sync', from: 'Marketing', note: 'Cross-functional sync. Needs three sign-offs.',
+      approvers: ['vp_strategy', 'cfo', 'cto', 'ceo', 'chro'], requiresApprovals: 3 },
+    { uid: 'd13-r4', typeId: 'eng-escalation', from: 'CTO', note: 'Raj filed a meta-escalation about the escalation process.' },
+    { uid: 'd13-r5', typeId: 'budget-review', from: 'CFO', note: 'Headcount freeze briefing. Cameras off.' },
+    { uid: 'd13-r6', typeId: 'culture-sync', from: 'HR', note: 'Survey results came back. They are "interesting".' },
+    { uid: 'd13-r7', typeId: 'town-hall', from: 'CEO', note: 'Mid-week alignment. Mandatory smiling.' },
+    { uid: 'd13-r8', typeId: 'pre-read-sync', from: 'Strategy', note: 'Sync about a doc nobody read yet.' },
+  ],
+  14: [
+    { uid: 'd14-r1', typeId: 'standup', from: 'Engineering', note: 'Thursday. Riya muted herself permanently.' },
+    { uid: 'd14-r2', typeId: 'project-kickoff', from: 'Product', note: 'New initiative. Needs broad sign-off.',
+      approvers: ['ceo', 'cfo', 'cto', 'vp_strategy', 'boss'], requiresApprovals: 3 },
+    { uid: 'd14-r3', typeId: 'budget-review', from: 'CFO', note: 'Diana has produced a spreadsheet of spreadsheets.' },
+    { uid: 'd14-r4', typeId: 'retro', from: 'Product', note: 'Retro about retros. Recursion intended.' },
+    { uid: 'd14-r5', typeId: 'stakeholder-sync', from: 'Sales', note: 'Sales wants pipeline alignment. Again.' },
+    { uid: 'd14-r6', typeId: 'design-review', from: 'Design', note: 'Same flow, slightly bluer shadows.' },
+    { uid: 'd14-r7', typeId: 'okr-checkin', from: 'VP Strategy', note: 'Tom rebranded "stretch" to "ambitious".' },
+    { uid: 'd14-r8', typeId: 'eng-escalation', from: 'CTO', note: 'Process is now an incident.' },
+  ],
+  15: [
+    { uid: 'd15-r1', typeId: 'standup', from: 'Engineering', note: 'Friday. Standup has been replaced with silence.' },
+    { uid: 'd15-r2', typeId: 'all-hands', from: 'CEO', note: 'Week-closer. Probably a process announcement.' },
+    { uid: 'd15-r3', typeId: 'quarterly-review', from: 'CFO', note: 'Mid-Q deep-dive. Diana brought a deck of decks.',
+      approvers: ['cfo', 'ceo', 'vp_strategy', 'cto', 'boss'], requiresApprovals: 3 },
+    { uid: 'd15-r4', typeId: 'pr-cleanup', from: 'Legal', note: 'Someone summarized the reorg incorrectly externally.' },
+    { uid: 'd15-r5', typeId: 'retro', from: 'Engineering', note: 'Sprint retro. Three sticky notes about sticky notes.' },
+    { uid: 'd15-r6', typeId: 'strategy-offsite', from: 'Leadership', note: 'Off-cycle planning. Approval required.',
+      approvers: ['ceo', 'cfo', 'cto', 'vp_strategy', 'chro'], requiresApprovals: 3 },
+    { uid: 'd15-r7', typeId: 'town-hall', from: 'CEO', note: 'Quarterly close. Marcus prepared remarks.' },
+    { uid: 'd15-r8', typeId: 'culture-sync', from: 'HR', note: 'End-of-week vibes. Optional but observed.' },
+  ],
 };
 
 export function requestsForDay(day: number): MeetingRequest[] {
@@ -433,6 +494,44 @@ export const CHAOS_EVENTS: ChaosEvent[] = [
     delegateImpact: { visibility: -3, executiveConfidence: -6, morale: +2 },
     rescheduleImpact: { visibility: -6, executiveConfidence: -10, alignment: -4, morale: +3 },
   },
+
+  // ── Stage 3 chaos events ────────────────────────────────────────────────
+  {
+    id: 'cfo-blocks-budget',
+    emoji: '🧾',
+    title: 'CFO Froze Your Spend',
+    fromWho: 'CFO',
+    durationMin: 60,
+    attendees: 'You, Diana, a spreadsheet',
+    flavor: 'Diana put a hold on your initiative until you "walk her through the model".',
+    attendImpact: { executiveConfidence: +6, productivity: -10, burnout: +4, morale: -3 },
+    delegateImpact: { executiveConfidence: -8, alignment: -3, productivity: -2 },
+    rescheduleImpact: { executiveConfidence: -12, visibility: -4, alignment: -3 },
+  },
+  {
+    id: 'cto-no-meeting-mondays',
+    emoji: '🚫',
+    title: 'CTO Started a "No Meeting Mondays" Thread',
+    fromWho: 'CTO',
+    durationMin: 30,
+    attendees: '#engineering · loudly',
+    flavor: 'Raj posted a manifesto in #engineering. People are reacting with 🔥 emoji.',
+    attendImpact: { morale: +6, alignment: +4, executiveConfidence: -6, visibility: -3 },
+    delegateImpact: { morale: -2, alignment: -3, productivity: -1 },
+    rescheduleImpact: { morale: -4, alignment: -5, visibility: -2 },
+  },
+  {
+    id: 'vp-quarterly-deepdive',
+    emoji: '🔬',
+    title: 'VP Wants a "Quarterly Deep Dive"',
+    fromWho: 'VP Strategy',
+    durationMin: 90,
+    attendees: '8 reluctant leads',
+    flavor: 'Tom wants 90 minutes on your area. He brought a framework. He always brings a framework.',
+    attendImpact: { visibility: +10, executiveConfidence: +5, alignment: +3, productivity: -8, burnout: +4 },
+    delegateImpact: { visibility: -3, alignment: -2, executiveConfidence: -4 },
+    rescheduleImpact: { visibility: -6, executiveConfidence: -8, alignment: -3 },
+  },
 ];
 
 /** Stage 1 quarterly goals — visible on Overview as progress bars. */
@@ -458,8 +557,26 @@ export const STAGE2_GOALS: QuarterlyGoal[] = [
   { id: 'g2-burnout',    label: "Don't Implode",          kpi: 'burnout',        emoji: '🔥', target: 65, lowerIsBetter: true },
 ];
 
+/**
+ * Stage 3 quarterly goals — politics replace output. "Decision Velocity" and
+ * "Maintain Coalition" model the Stage 3 thesis: in bureaucracy, the work
+ * is about who lines up behind you, not what you ship.
+ *
+ * Note: "Decision Velocity" and "Survive Approval Chains" rely on counters
+ * tracked in the store (decisionsThisStage, approvalChainsCleared) rather
+ * than KPIs — those goals show progress as N/target.
+ */
+export const STAGE3_GOALS: QuarterlyGoal[] = [
+  { id: 'g3-boss',     label: 'Boss Patience',          stakeholderId: 'boss', emoji: '🤝', target: 50 },
+  { id: 'g3-cfo',      label: 'No CFO Blocks',          stakeholderId: 'cfo',  emoji: '🧾', target: 40 },
+  { id: 'g3-coalition', label: 'Maintain Coalition',    kpi: 'alignment',      emoji: '🤝', target: 60 },
+  { id: 'g3-velocity', label: 'Decision Velocity',      kpi: 'executiveConfidence', emoji: '⚡', target: 55 },
+  { id: 'g3-burnout',  label: "Don't Burn Out",         kpi: 'burnout',        emoji: '🔥', target: 70, lowerIsBetter: true },
+];
+
 /** Stage → quarterly goal set. Falls back to Stage 1 for stages not built yet. */
 export function stageGoalsFor(stage: StageId): QuarterlyGoal[] {
+  if (stage === 3) return STAGE3_GOALS;
   if (stage === 2) return STAGE2_GOALS;
   return STAGE1_GOALS;
 }
@@ -467,11 +584,22 @@ export function stageGoalsFor(stage: StageId): QuarterlyGoal[] {
 /**
  * Stage → daily accept cap. The Stage 2 drop from 5 → 4 is the single most
  * felt change of the stage transition; once it lands, every "yes" forces a
- * "no" somewhere else.
+ * "no" somewhere else. Stage 3 holds the cap at 4 — pressure comes from
+ * approval chains, not slot scarcity.
  */
 export function capFor(stage: StageId): number {
   if (stage >= 2) return 4;
   return 5;
+}
+
+/**
+ * Stage 3+ politics multiplier. Per the gameplay plan, Stage 3 doubles down
+ * on political consequences: every relationship change is ×1.5. Mistakes
+ * hurt more, alliances pay more.
+ */
+export function politicsMultiplier(stage: StageId): number {
+  if (stage >= 3) return 1.5;
+  return 1;
 }
 
 /**

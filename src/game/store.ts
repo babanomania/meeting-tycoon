@@ -12,9 +12,11 @@ import type {
   GameOver,
   Kpis,
   KpiDelta,
+  MeetingRequest,
   MeetingTypeId,
   ScheduledMeeting,
   Stakeholder,
+  StakeholderId,
 } from './types';
 import {
   STAKEHOLDERS_SEED,
@@ -27,6 +29,7 @@ import {
   MEETING_TYPES,
   STAGE1_GOALS,
   capFor,
+  politicsMultiplier,
   requestsForDay,
   stageGoalsFor,
 } from './data';
@@ -53,6 +56,7 @@ const STARTING_KPIS: Kpis = {
 
 const STAGE1_LAST_DAY = 5;
 const STAGE2_LAST_DAY = 10;
+const STAGE3_LAST_DAY = 15;
 /**
  * Legacy constant — still exported for older callers that hard-coded "5".
  * New code should call `capFor(stage)` instead. The Stage 2 transition
@@ -60,6 +64,22 @@ const STAGE2_LAST_DAY = 10;
  * shows "accepts left", or the player will misread the calendar load.
  */
 const DAILY_ACCEPT_CAP = 5;
+
+/**
+ * Default number of approvers required when a request has an `approvers`
+ * list but no explicit `requiresApprovals`. Plan says 3 of 5.
+ */
+const DEFAULT_REQUIRED_APPROVALS = 3;
+
+/** True if this request can be accepted right now (no chain, or chain met). */
+export function isRequestApproved(
+  req: MeetingRequest,
+  approvals: StakeholderId[] | undefined,
+): boolean {
+  if (!req.approvers || req.approvers.length === 0) return true;
+  const need = req.requiresApprovals ?? DEFAULT_REQUIRED_APPROVALS;
+  return (approvals?.length ?? 0) >= need;
+}
 
 const clamp = (n: number) => Math.max(0, Math.min(100, n));
 
@@ -79,6 +99,46 @@ const sumDeltas = (a: KpiDelta, b: KpiDelta): KpiDelta => {
   }
   return out;
 };
+
+/**
+ * Probability a given stakeholder signs off on an approval-gated request
+ * this tick. Weighted by current relationship so good relationships speed
+ * up your approval chains — the Stage 3 satire made literal.
+ */
+function approvalChance(rel: number): number {
+  if (rel >= 70) return 0.55;
+  if (rel >= 50) return 0.35;
+  if (rel >= 30) return 0.20;
+  return 0.10;
+}
+
+/**
+ * For every approval-gated pending request, roll the dice for each remaining
+ * approver. Returns a new requestApprovals map with whatever signed off.
+ * Pure helper — no side effects.
+ */
+function tickApprovalsOnce(
+  pending: MeetingRequest[],
+  current: Record<string, StakeholderId[]>,
+  stakeholders: Stakeholder[],
+): Record<string, StakeholderId[]> {
+  const next = { ...current };
+  for (const req of pending) {
+    if (!req.approvers || req.approvers.length === 0) continue;
+    const need = req.requiresApprovals ?? DEFAULT_REQUIRED_APPROVALS;
+    const so_far = next[req.uid] ?? [];
+    if (so_far.length >= need) continue;
+    const remaining = req.approvers.filter((a) => !so_far.includes(a));
+    const newApprovers: StakeholderId[] = [];
+    for (const a of remaining) {
+      const rel = stakeholders.find((s) => s.id === a)?.relationship ?? 50;
+      if (Math.random() < approvalChance(rel)) newApprovers.push(a);
+      if (so_far.length + newApprovers.length >= need) break;
+    }
+    if (newApprovers.length > 0) next[req.uid] = [...so_far, ...newApprovers];
+  }
+  return next;
+}
 
 const checkGameOver = (
   k: Kpis,
@@ -108,6 +168,19 @@ const checkGameOver = (
       title: 'Forced Sabbatical',
       body: 'You scheduled a meeting with yourself, attended it, and did not come back. People Ops calls this "wellness".',
     };
+  }
+  // ── Stage 3+ bureaucratic failure: every stakeholder cool to you means
+  //    nothing gets approved, ever. Process Paralysis.
+  if (stage >= 3) {
+    const allSoured = stakeholders.length > 0 && stakeholders.every((s) => s.relationship <= 50);
+    if (allSoured) {
+      return {
+        reason: 'process-paralysis',
+        emoji: '🧊',
+        title: 'Process Paralysis',
+        body: 'Every initiative has been parked in a "review committee". Every decision is "pending sign-off". You discover you have been technically PTO for three weeks. Nobody noticed.',
+      };
+    }
   }
   // ── Stage 2+ political failure: if too many stakeholders sour on you,
   //    you don't get fired — you get *restructured*. The plan calls this
@@ -154,6 +227,19 @@ interface GameState {
   shieldMeetingsToday: number;
   /** Whether the Reorg Whispers chaos has been forced once during Stage 2 yet. */
   reorgForcedThisStage: boolean;
+
+  // ── Stage 3 mechanics ──
+  /** Per-request approval ledger. Keyed by request uid → list of stakeholders
+   *  who have signed off so far. Cleared on stage transitions. */
+  requestApprovals: Record<string, StakeholderId[]>;
+  /** Approval-gated requests carried over from previous days. Sit in the
+   *  inbox until accepted or declined. */
+  carryoverRequests: MeetingRequest[];
+  /** How many approval chains the player has cleared this stage. Counts toward
+   *  the "Survive 3 Approval Chains" Stage 3 goal. */
+  approvalChainsCleared: number;
+  /** How many chaos events the player has punted to the boss this stage. */
+  chaosPassedToBoss: number;
 
   // ── Chat ───────────────────────────────────────────────────────────────
   conversations: Conversation[];
@@ -234,9 +320,22 @@ export function pendingRequestsFor(
   day: number,
   acceptedIds: string[],
   schedule: ScheduledMeeting[],
+  carryoverRequests: MeetingRequest[] = [],
 ) {
   const recurringTypeIds = new Set(schedule.filter((m) => m.recurring).map((m) => m.typeId));
-  return requestsForDay(day).filter((r) => {
+  const todays = requestsForDay(day);
+  // Merge: carryovers first (they've been waiting longer), then today's pool,
+  // de-dup by uid in case a carryover and today's pool both somehow contain it.
+  const seen = new Set<string>();
+  const merged: MeetingRequest[] = [];
+  for (const list of [carryoverRequests, todays]) {
+    for (const r of list) {
+      if (seen.has(r.uid)) continue;
+      seen.add(r.uid);
+      merged.push(r);
+    }
+  }
+  return merged.filter((r) => {
     if (acceptedIds.includes(r.uid)) return false;
     if (acceptedIds.includes(`decline:${r.uid}`)) return false;
     const t = MEETING_TYPES[r.typeId];
@@ -419,6 +518,10 @@ export const useGame = create<GameState>()(
       dashboardSentToday: false,
       shieldMeetingsToday: 0,
       reorgForcedThisStage: false,
+      requestApprovals: {},
+      carryoverRequests: [],
+      approvalChainsCleared: 0,
+      chaosPassedToBoss: 0,
       conversations: [],
       messages: {},
       openConversationId: null,
@@ -441,16 +544,24 @@ export const useGame = create<GameState>()(
       closeSettings: () => set({ settingsOpen: false }),
 
       acceptRequest: (requestId) => {
-        const requests = requestsForDay(get().day);
-        const req = requests.find((r) => r.uid === requestId);
+        const s0 = get();
+        // Look up the request in either the day's pool OR the Stage 3 carryover queue.
+        const req =
+          requestsForDay(s0.day).find((r) => r.uid === requestId) ??
+          s0.carryoverRequests.find((r) => r.uid === requestId);
         if (!req) return;
-        if (get().acceptedRequestIds.includes(requestId)) return;
+        if (s0.acceptedRequestIds.includes(requestId)) return;
 
-        const beforeCount = countAcceptsToday(get().acceptedRequestIds);
-        if (beforeCount >= capFor(get().stage)) return;
+        // Stage 3 approval gate — block until the chain clears.
+        const approvals = s0.requestApprovals[requestId];
+        if (!isRequestApproved(req, approvals)) return;
+        const wasApprovalGated = !!req.approvers && req.approvers.length > 0;
+
+        const beforeCount = countAcceptsToday(s0.acceptedRequestIds);
+        if (beforeCount >= capFor(s0.stage)) return;
 
         const type = MEETING_TYPES[req.typeId];
-        const start = findFreeSlot(get().schedule, type.durationMin);
+        const start = findFreeSlot(s0.schedule, type.durationMin);
         if (start < 0) return;
         const isRecurring = type.priority === 'recurring';
 
@@ -458,23 +569,38 @@ export const useGame = create<GameState>()(
         const now = Date.now();
         const { conversations: convos1, messages: msgs1 } = ensureMeetingChat(
           req.typeId as MeetingTypeId,
-          get().conversations,
-          get().messages,
+          s0.conversations,
+          s0.messages,
           now,
         );
 
         // Fire any group-channel reactions.
         const evt: ChatEvent = { type: 'meeting-accepted', meetingTypeId: req.typeId as MeetingTypeId };
-        const { conversations: convos2, messages: msgs2 } = applyChatEvent(convos1, msgs1, evt);
+        let convos2 = convos1;
+        let msgs2 = msgs1;
+        ({ conversations: convos2, messages: msgs2 } = applyChatEvent(convos1, msgs1, evt));
+        // If this cleared an approval chain, fire that event too.
+        if (wasApprovalGated) {
+          ({ conversations: convos2, messages: msgs2 } = applyChatEvent(
+            convos2, msgs2,
+            { type: 'approval-cleared', meetingTypeId: req.typeId as MeetingTypeId },
+          ));
+        }
 
-        // Politics: accepting from a stakeholder is a small relationship boost.
+        // Politics: accepting from a stakeholder is a small relationship boost,
+        // scaled by Stage 3+ politics multiplier.
+        const mul = politicsMultiplier(s0.stage);
+        const relDelta = Math.round(5 * mul);
         const stakeholderId = senderToStakeholder(req.from);
         const nextStakeholders = stakeholderId
-          ? adjustRelationship(get().stakeholders, stakeholderId, +5, `Accepted ${type.title}`)
-          : get().stakeholders;
+          ? adjustRelationship(s0.stakeholders, stakeholderId, relDelta, `Accepted ${type.title}`)
+          : s0.stakeholders;
         const stakeholderForToast = stakeholderId
           ? nextStakeholders.find((x) => x.id === stakeholderId)
           : undefined;
+
+        // Drop the request from carryover if it lived there.
+        const nextCarryover = s0.carryoverRequests.filter((r) => r.uid !== requestId);
 
         set((s) => ({
           schedule: [
@@ -488,9 +614,11 @@ export const useGame = create<GameState>()(
             },
           ],
           acceptedRequestIds: [...s.acceptedRequestIds, requestId],
+          carryoverRequests: nextCarryover,
+          approvalChainsCleared: wasApprovalGated ? s.approvalChainsCleared + 1 : s.approvalChainsCleared,
           activityToday: logActivity(s.activityToday, {
             kind: 'meeting-scheduled',
-            title: `Scheduled ${type.title}`,
+            title: wasApprovalGated ? `Approved & scheduled ${type.title}` : `Scheduled ${type.title}`,
             detail: isRecurring
               ? `${req.from} · ${type.durationMin}m · repeats daily`
               : `${req.from} · ${type.durationMin}m`,
@@ -501,15 +629,25 @@ export const useGame = create<GameState>()(
           stakeholders: nextStakeholders,
           toast: {
             id: `toast-${Date.now()}-acc`,
-            title: `Scheduled · ${type.title}`,
-            intent: 'info',
+            title: wasApprovalGated
+              ? `Chain cleared · ${type.title}`
+              : `Scheduled · ${type.title}`,
+            intent: wasApprovalGated ? 'success' : 'info',
             icon: 'calendar',
             kpiDelta: type.impact,
             stakeholder: stakeholderForToast
-              ? { name: characterDisplayName(stakeholderForToast.name), delta: +5 }
+              ? { name: characterDisplayName(stakeholderForToast.name), delta: relDelta }
               : undefined,
           },
         }));
+
+        // Stage 3: tick approval chains forward on every action.
+        const s1 = get();
+        if (s1.stage >= 3) {
+          const stillPending = pendingRequestsFor(s1.day, s1.acceptedRequestIds, s1.schedule, s1.carryoverRequests);
+          const nextApprovals = tickApprovalsOnce(stillPending, s1.requestApprovals, s1.stakeholders);
+          set({ requestApprovals: nextApprovals });
+        }
 
         const afterCount = beforeCount + 1;
         if ((afterCount === 2 || afterCount === 4) && !get().activeChaos) {
@@ -543,10 +681,12 @@ export const useGame = create<GameState>()(
       },
 
       declineRequest: (requestId) => {
-        const requests = requestsForDay(get().day);
-        const req = requests.find((r) => r.uid === requestId);
+        const s0 = get();
+        const req =
+          requestsForDay(s0.day).find((r) => r.uid === requestId) ??
+          s0.carryoverRequests.find((r) => r.uid === requestId);
         if (!req) return;
-        if (get().acceptedRequestIds.includes(`decline:${requestId}`)) return;
+        if (s0.acceptedRequestIds.includes(`decline:${requestId}`)) return;
 
         const t = MEETING_TYPES[req.typeId];
         let cost: KpiDelta = {};
@@ -569,8 +709,8 @@ export const useGame = create<GameState>()(
 
         // Group channel reactions.
         const { conversations: convos2, messages: msgs2 } = applyChatEvent(
-          get().conversations,
-          get().messages,
+          s0.conversations,
+          s0.messages,
           { type: 'meeting-declined', meetingTypeId: req.typeId as MeetingTypeId },
         );
 
@@ -585,19 +725,31 @@ export const useGame = create<GameState>()(
         // Stage 2+ "Recurring Cost Inflation": declining a recurring meeting is
         // stickier — your absence broadcasts further when the team's already
         // under pressure. ×1.5 turns the −6 into −9 (rounded).
-        if (get().stage >= 2 && t.priority === 'recurring') {
+        if (s0.stage >= 2 && t.priority === 'recurring') {
           declineDelta = Math.round(declineDelta * 1.5);
         }
+        // Stage 3 politics doubles every relationship change ×1.5.
+        const mul = politicsMultiplier(s0.stage);
+        if (mul !== 1) declineDelta = Math.round(declineDelta * mul);
+
         const nextStakeholders = stakeholderId
-          ? adjustRelationship(get().stakeholders, stakeholderId, declineDelta, `Declined ${t.title}`)
-          : get().stakeholders;
+          ? adjustRelationship(s0.stakeholders, stakeholderId, declineDelta, `Declined ${t.title}`)
+          : s0.stakeholders;
         const stakeholderForToast = stakeholderId
           ? nextStakeholders.find((x) => x.id === stakeholderId)
           : undefined;
 
+        // Declining clears it from the carryover queue (and from approval
+        // ledger — gone is gone).
+        const nextCarryover = s0.carryoverRequests.filter((r) => r.uid !== requestId);
+        const nextApprovals = { ...s0.requestApprovals };
+        delete nextApprovals[requestId];
+
         set((s) => ({
           acceptedRequestIds: [...s.acceptedRequestIds, `decline:${requestId}`],
           kpis: applyDelta(s.kpis, cost),
+          carryoverRequests: nextCarryover,
+          requestApprovals: nextApprovals,
           activityToday: logActivity(s.activityToday, {
             kind: 'meeting-declined',
             title: `Declined ${t.title}`,
@@ -618,6 +770,14 @@ export const useGame = create<GameState>()(
               : undefined,
           },
         }));
+
+        // Stage 3: tick approvals after every action.
+        const s1 = get();
+        if (s1.stage >= 3) {
+          const stillPending = pendingRequestsFor(s1.day, s1.acceptedRequestIds, s1.schedule, s1.carryoverRequests);
+          const ticked = tickApprovalsOnce(stillPending, s1.requestApprovals, s1.stakeholders);
+          set({ requestApprovals: ticked });
+        }
 
         // High/crisis declines often trigger a DM follow-up.
         if ((t.priority === 'high' || t.priority === 'crisis') && Math.random() < 0.7) {
@@ -674,12 +834,15 @@ export const useGame = create<GameState>()(
         if (!s.activeChaos) return;
         const ev = CHAOS_EVENTS.find((e) => e.id === s.activeChaos!.id);
         if (!ev) return;
-        const impact =
-          response === 'attend'
-            ? ev.attendImpact
-            : response === 'delegate'
-            ? ev.delegateImpact
-            : ev.rescheduleImpact;
+
+        // Stage 3 "Pass to Boss" — zero KPI impact, big Boss-relationship hit.
+        // The trade: you offload the work, but you owe David a favor (or two).
+        const isPass = response === 'pass-to-boss';
+        const impact: KpiDelta =
+          response === 'attend'      ? ev.attendImpact :
+          response === 'delegate'    ? ev.delegateImpact :
+          response === 'reschedule'  ? ev.rescheduleImpact :
+          /* pass-to-boss */         {};
 
         let newSchedule = s.schedule;
         if (response === 'attend') {
@@ -698,33 +861,49 @@ export const useGame = create<GameState>()(
         }
 
         const label =
-          response === 'attend'
-            ? 'Attended'
-            : response === 'delegate'
-            ? 'Delegated'
-            : 'Rescheduled';
+          response === 'attend'      ? 'Attended' :
+          response === 'delegate'    ? 'Delegated' :
+          response === 'reschedule'  ? 'Rescheduled' :
+          /* pass-to-boss */         'Passed to Boss';
         const activityKind =
-          response === 'attend'
-            ? 'chaos-attended'
-            : response === 'delegate'
-            ? 'chaos-delegated'
-            : 'chaos-rescheduled';
+          response === 'attend'      ? 'chaos-attended' :
+          response === 'delegate'    ? 'chaos-delegated' :
+          /* reschedule + pass */    'chaos-rescheduled';
 
-        // Fire group channel reaction.
-        const { conversations: convos2, messages: msgs2 } = applyChatEvent(
-          s.conversations,
-          s.messages,
-          { type: 'chaos-resolved', chaosId: ev.id, response },
-        );
+        // Fire group channel reaction. The chaos-resolved event only knows
+        // the original three responses — pass-to-boss gets its own event
+        // (handled below) so #leadership and David can react specifically.
+        let convos2 = s.conversations;
+        let msgs2 = s.messages;
+        if (!isPass) {
+          ({ conversations: convos2, messages: msgs2 } = applyChatEvent(
+            convos2, msgs2,
+            { type: 'chaos-resolved', chaosId: ev.id, response: response as 'attend' | 'delegate' | 'reschedule' },
+          ));
+        } else {
+          ({ conversations: convos2, messages: msgs2 } = applyChatEvent(
+            convos2, msgs2,
+            { type: 'passed-to-boss', chaosId: ev.id },
+          ));
+        }
 
-        // Politics: how the player responded to chaos hits the requesting stakeholder.
-        const chaosStakeholderId = senderToStakeholder(ev.fromWho);
-        const chaosRelDelta =
-          response === 'attend' ? +8 :
-          response === 'delegate' ? -3 :
-          /* reschedule */ -6;
+        // Politics:
+        //  - For non-pass responses, the *requesting* stakeholder's relationship
+        //    changes (×Stage 3 multiplier).
+        //  - For pass-to-boss, the *boss* takes a fixed -15 hit (still ×mul).
+        const mul = politicsMultiplier(s.stage);
+        const chaosStakeholderId = isPass ? 'boss' : senderToStakeholder(ev.fromWho);
+        const rawDelta =
+          isPass                     ? -15 :
+          response === 'attend'      ? +8 :
+          response === 'delegate'    ? -3 :
+          /* reschedule */           -6;
+        const chaosRelDelta = Math.round(rawDelta * mul);
+        const reasonNote = isPass
+          ? `Punted "${ev.title}" to you`
+          : `${label} their chaos event`;
         const nextStakeholders = chaosStakeholderId
-          ? adjustRelationship(s.stakeholders, chaosStakeholderId, chaosRelDelta, `${label} their chaos event`)
+          ? adjustRelationship(s.stakeholders, chaosStakeholderId, chaosRelDelta, reasonNote)
           : s.stakeholders;
         const chaosStakeholderForToast = chaosStakeholderId
           ? nextStakeholders.find((x) => x.id === chaosStakeholderId)
@@ -735,6 +914,7 @@ export const useGame = create<GameState>()(
           triggeredChaosIds: [...s.triggeredChaosIds, ev.id],
           chaosDelta: sumDeltas(s.chaosDelta, impact),
           schedule: newSchedule,
+          chaosPassedToBoss: isPass ? s.chaosPassedToBoss + 1 : s.chaosPassedToBoss,
           activityToday: logActivity(s.activityToday, {
             kind: activityKind,
             title: `${label}: ${ev.title}`,
@@ -747,7 +927,7 @@ export const useGame = create<GameState>()(
           toast: {
             id: `toast-${Date.now()}-chaos`,
             title: `${label} · ${ev.title}`,
-            intent: response === 'attend' ? 'info' : response === 'delegate' ? 'caution' : 'warning',
+            intent: response === 'attend' ? 'info' : isPass ? 'warning' : response === 'delegate' ? 'caution' : 'warning',
             icon: 'alert',
             kpiDelta: impact,
             stakeholder: chaosStakeholderForToast
@@ -795,8 +975,11 @@ export const useGame = create<GameState>()(
         // Politics: replying to a stakeholder's DM shifts the relationship.
         // Index-based heuristic: option 0 = warm reply (+3), option 1 = neutral (0),
         // option 2 = pushback (-4). Picks up most templates without hand-tuning.
+        // Stage 3+ multiplies all relationship deltas.
         const stakeholderId = senderToStakeholder(convo.name);
-        const replyDelta = replyIdx === 0 ? +3 : replyIdx === 1 ? 0 : -4;
+        const replyMul = politicsMultiplier(s.stage);
+        const replyDeltaRaw = replyIdx === 0 ? +3 : replyIdx === 1 ? 0 : -4;
+        const replyDelta = Math.round(replyDeltaRaw * replyMul);
         const nextStakeholders = stakeholderId
           ? adjustRelationship(s.stakeholders, stakeholderId, replyDelta, `Replied "${reply.text.slice(0, 32)}"`)
           : s.stakeholders;
@@ -1005,16 +1188,21 @@ export const useGame = create<GameState>()(
         const s = get();
         const finishedStage1 = s.stage === 1 && s.day >= STAGE1_LAST_DAY;
         const finishedStage2 = s.stage === 2 && s.day >= STAGE2_LAST_DAY;
+        const finishedStage3 = s.stage === 3 && s.day >= STAGE3_LAST_DAY;
         const nextStage: 1 | 2 | 3 | 4 | 5 = finishedStage1
           ? 2
           : finishedStage2
           ? 3
+          : finishedStage3
+          ? 4
           : s.stage;
         const stageChanged = nextStage !== s.stage;
         const stageUnlocked: 2 | 3 | 4 | 5 | null = finishedStage1
           ? 2
           : finishedStage2
           ? 3
+          : finishedStage3
+          ? 4
           : null;
 
         const recurringCarry: ScheduledMeeting[] = s.schedule
@@ -1064,6 +1252,30 @@ export const useGame = create<GameState>()(
           }
         }
 
+        // ── Stage 3 approval-chain carryover ───────────────────────────────
+        // Approval-gated requests from previous days that weren't actioned
+        // follow the player into the next day. On stage transitions, the
+        // queue resets (Stage 4 starts fresh).
+        const todayPending = pendingRequestsFor(s.day, s.acceptedRequestIds, s.schedule, s.carryoverRequests);
+        const nextCarryover: MeetingRequest[] = stageChanged
+          ? []
+          : todayPending.filter((r) => r.approvers && r.approvers.length > 0);
+
+        // Tick approvals once at day start so the chain visibly moves.
+        let nextApprovalsAfterTick = stageChanged ? {} : { ...s.requestApprovals };
+        // Drop approval entries for requests no longer in play.
+        const carryoverUids = new Set(nextCarryover.map((r) => r.uid));
+        for (const uid of Object.keys(nextApprovalsAfterTick)) {
+          if (!carryoverUids.has(uid)) delete nextApprovalsAfterTick[uid];
+        }
+        if (nextStage >= 3 && !stageChanged) {
+          nextApprovalsAfterTick = tickApprovalsOnce(
+            nextCarryover,
+            nextApprovalsAfterTick,
+            s.stakeholders,
+          );
+        }
+
         set({
           day: nextDay,
           stage: nextStage,
@@ -1080,6 +1292,11 @@ export const useGame = create<GameState>()(
           dashboardSentToday: false,
           shieldMeetingsToday: 0,
           reorgForcedThisStage: nextReorgForced,
+          // Stage 3 ledger — carry approval queue across days, reset on stage transition.
+          carryoverRequests: nextCarryover,
+          requestApprovals: nextApprovalsAfterTick,
+          approvalChainsCleared: stageChanged ? 0 : s.approvalChainsCleared,
+          chaosPassedToBoss: stageChanged ? 0 : s.chaosPassedToBoss,
           activityToday: recurringCarry.length
             ? recurringCarry.map((m, i) => ({
                 id: `dayseed-${Date.now()}-${i}`,
@@ -1122,6 +1339,10 @@ export const useGame = create<GameState>()(
           dashboardSentToday: false,
           shieldMeetingsToday: 0,
           reorgForcedThisStage: false,
+          requestApprovals: {},
+          carryoverRequests: [],
+          approvalChainsCleared: 0,
+          chaosPassedToBoss: 0,
           conversations: [],
           messages: {},
           openConversationId: null,
@@ -1155,10 +1376,11 @@ export const useGame = create<GameState>()(
     }),
     {
       name: 'meeting-tycoon-save',
-      // Bumped for Stage 2: new state fields (dashboardSentToday,
-      // shieldMeetingsToday, reorgForcedThisStage) + new game-over reason
-      // would otherwise round-trip from stale saves.
-      version: 10,
+      // Bumped for Stage 3: new state fields (requestApprovals, carryoverRequests,
+      // approvalChainsCleared, chaosPassedToBoss) + new game-over reason
+      // ('process-paralysis') + new chaos response ('pass-to-boss'). Old saves
+      // would crash on read.
+      version: 11,
       migrate: () => undefined,
     },
   ),
@@ -1236,6 +1458,19 @@ function pickBossFeedback(
       text: `Solid progress — ${hitGoals}/${goals.length} quarterly goals hit. Keep doing whatever you are doing.`,
     };
   }
+  // Stage 3 specific: praise (or call out) bureaucratic fluency.
+  if (s.stage >= 3 && s.approvalChainsCleared >= 3) {
+    return {
+      emoji: '🙂',
+      text: `${s.approvalChainsCleared} approval chains cleared this stage. You speak Process now.`,
+    };
+  }
+  if (s.stage >= 3 && s.chaosPassedToBoss >= 2) {
+    return {
+      emoji: '😬',
+      text: 'You have passed two crises to me. I noticed. Try not to make it three.',
+    };
+  }
 
   // ── Negative: overload warnings.
   if (k.burnout >= 70) {
@@ -1257,4 +1492,4 @@ function pickBossFeedback(
   };
 }
 
-export { STARTING_KPIS, applyDelta, STAGE1_LAST_DAY, STAGE2_LAST_DAY, DAILY_ACCEPT_CAP };
+export { STARTING_KPIS, applyDelta, STAGE1_LAST_DAY, STAGE2_LAST_DAY, STAGE3_LAST_DAY, DAILY_ACCEPT_CAP };

@@ -63,6 +63,7 @@ export function CalendarScreen() {
   const sendDashboardReport = useGame((s) => s.sendDashboardReport);
   const dashboardSentToday = useGame((s) => s.dashboardSentToday);
   const shieldMeetingsToday = useGame((s) => s.shieldMeetingsToday);
+  const carryover = useGame((s) => s.carryoverRequests);
 
   const cap = capFor(stage);
   const goals = stageGoalsFor(stage);
@@ -71,7 +72,7 @@ export function CalendarScreen() {
   const focusHrs = Math.max(0, Math.round(((540 - totalMin) / 60) * 10) / 10);
   const loadHrs = Math.round((totalMin / 60) * 10) / 10;
 
-  const pendingCount = pendingRequestsFor(day, accepted, schedule).length;
+  const pendingCount = pendingRequestsFor(day, accepted, schedule, carryover).length;
   const acceptsToday = accepted.filter(
     (id) => !id.startsWith('decline:') && !id.startsWith('recurring:'),
   ).length;

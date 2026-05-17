@@ -478,6 +478,57 @@ export const EVENT_REACTIONS: Array<{
       },
     ],
   },
+
+  // ── Stage 3 events ─────────────────────────────────────────────────────
+  // Approval chain cleared — quiet acknowledgment from #leadership.
+  // The joke: it took 3 people to agree something obvious is obvious.
+  {
+    match: (e) => e.type === 'approval-cleared',
+    reactions: [
+      {
+        conversationId: 'group-leadership',
+        sender: 'VP Strategy',
+        body: () => 'approvals secured. proceeding to the next round of approvals.',
+        reactions: ['✅', '🙏'],
+      },
+    ],
+  },
+  // Pass to Boss — David is conspicuously silent in chat, but #leadership notices.
+  {
+    match: (e) => e.type === 'passed-to-boss',
+    reactions: [
+      {
+        conversationId: 'group-leadership',
+        sender: 'CHRO',
+        body: () => 'David picked it up. He always does.',
+        reactions: ['👀'],
+      },
+    ],
+  },
+  // CFO blocks budget chaos — Diana posts about "spend hygiene" in #leadership.
+  {
+    match: (e) => e.type === 'chaos-resolved' && e.chaosId === 'cfo-blocks-budget',
+    reactions: [
+      {
+        conversationId: 'group-leadership',
+        sender: 'CFO',
+        body: () => 'reminder: every dollar tells a story. usually a sad one.',
+        reactions: ['🧾', '👀'],
+      },
+    ],
+  },
+  // CTO no-meeting-Mondays — #engineering rallies.
+  {
+    match: (e) => e.type === 'chaos-resolved' && e.chaosId === 'cto-no-meeting-mondays',
+    reactions: [
+      {
+        conversationId: 'group-engineering',
+        sender: 'Marcus W.',
+        body: () => 'finally. someone said it. 🔥',
+        reactions: ['🔥', '🙏', '🚫'],
+      },
+    ],
+  },
 ];
 
 // ──────────────────────────────────────────────────────────────────────────

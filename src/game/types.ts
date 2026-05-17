@@ -61,6 +61,12 @@ export interface MeetingRequest {
   typeId: MeetingTypeId;
   from: string; // who requested it
   note: string;
+  // ── Stage 3: Approval Chains ──
+  /** If set, the player can only accept after `requiresApprovals` of these
+   *  stakeholders have signed off. Drives the "Needs 3/5 approvals" chip. */
+  approvers?: StakeholderId[];
+  /** Number of approvals required to unlock the request. Default: 3. */
+  requiresApprovals?: number;
 }
 
 export type StageId = 1 | 2 | 3 | 4 | 5;
@@ -92,7 +98,7 @@ export interface ChaosEvent {
   rescheduleImpact: KpiDelta;
 }
 
-export type ChaosResponse = 'attend' | 'delegate' | 'reschedule';
+export type ChaosResponse = 'attend' | 'delegate' | 'reschedule' | 'pass-to-boss';
 
 /**
  * Conversation = a thread (Teams-style). Three kinds:
@@ -178,7 +184,10 @@ export type ChatEvent =
   | { type: 'day-start'; day: number }
   // ── Stage 2 events ──
   | { type: 'shield-created' }       // player blocked their own calendar
-  | { type: 'dashboard-sent' };      // player sent a dashboard report instead of attending
+  | { type: 'dashboard-sent' }       // player sent a dashboard report instead of attending
+  // ── Stage 3 events ──
+  | { type: 'approval-cleared'; meetingTypeId: MeetingTypeId }   // approval chain unlocked a request
+  | { type: 'passed-to-boss'; chaosId: string };                 // player punted a chaos upward
 
 export type ActivityKind =
   | 'meeting-scheduled'
@@ -245,7 +254,8 @@ export type GameOverReason =
   | 'team-walkout'
   | 'fired-low-confidence'
   | 'burnout-sabbatical'
-  | 'restructured';
+  | 'restructured'
+  | 'process-paralysis';
 
 export interface GameOver {
   reason: GameOverReason;
